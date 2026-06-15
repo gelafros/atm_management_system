@@ -42,4 +42,5 @@ void checkAcc(struct User u);
 void makeTransaction(struct User u);
 void updateAcc(struct User u);
 void removeAcc(struct User u);
+void transferOwner(struct User u);
 

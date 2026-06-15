@@ -392,6 +392,46 @@ void removeAcc(struct User u)
     success(u);
 }    
 
+void transferOwner(struct User u)
+{
+    int accNbr;
+    printf("\nEnter the account number:");
+    scanf("%d", &accNbr);
+
+    char userName[100];
+    char newUserName[100];
+    struct Record r;
+    int found = 0;  
+
+    FILE *pf= fopen(RECORDS, "r");
+    FILE *temp = fopen("temp.txt", "w");
+    while (getAccountFromFile(pf, userName, &r))
+    {
+        if(strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
+        {
+            printf("_____________________\n");
+            printf("\nEnter the new owner name:");
+            scanf("%s", newUserName);
+            
+            strcpy(r.name, newUserName);
+            saveAccountToFile(temp, u, r);
+            found = 1;
+        }
+        else
+        {
+            saveAccountToFile(temp, u, r);
+        }
+    }
+
+    fclose(pf);
+    fclose(temp);
+    remove(RECORDS);
+    rename("temp.txt", RECORDS);
+    if (!found)
+        stayOrReturn(0, transferOwner, u);
+    success(u);
+}
+
 
 
         
