@@ -273,6 +273,69 @@ void makeTransaction(struct User u)
 }    
 
 
+void updateAcc(struct User u)
+{
+
+    int accNbr;
+    printf("\nEnter the account number:");
+    scanf("%d", &accNbr);
+
+    char userName[100];
+    struct Record r;
+    int found = 0;
+
+    FILE *pf= fopen(RECORDS, "r");
+    FILE *temp = fopen("temp.txt", "w");
+    while (getAccountFromFile(pf, userName, &r))
+    {
+        if(strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
+        {
+            do
+            {
+                printf("_____________________\n");
+                printf("What do you want to update?\n");
+                printf("Phone number:1  or country:2 ?");
+                scanf("%d", &found);
+                if (found == 1)
+                {
+                    printf("_____________________\n");
+                    printf("\nEnter the new phone number:");
+                    scanf("%d", &r.phone);
+                    saveAccountToFile(temp, u, r);
+                }
+                else if (found == 2)
+                {
+                    printf("_____________________\n");
+                    printf("\nEnter the new country:");
+                    scanf("%s", r.country);
+                    saveAccountToFile(temp, u, r);
+                }
+            } while(found != 1 && found != 2);
+        }
+        else
+        {
+            saveAccountToFile(temp, u, r);  
+        }
+    }
+    fclose(pf);
+    fclose(temp);
+    remove(RECORDS);
+    rename("temp.txt", RECORDS);
+    if (!found)
+        stayOrReturn(0, updateAcc, u);
+    success(u);
+
+}
+
+        
+
+
+
+
+
+
+
+
 
     
 
