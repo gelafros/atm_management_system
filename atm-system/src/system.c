@@ -173,6 +173,8 @@ void checkAcc(struct User u)
     char userName[100];
     struct Record r;
     int found = 0;
+    double interest;
+
 
     FILE *pf = fopen(RECORDS, "r");
     while (getAccountFromFile(pf, userName, &r))
@@ -190,6 +192,37 @@ void checkAcc(struct User u)
                    r.amount,
                    r.accountType);
             found = 1;
+            if (strcmp(r.accountType, "savings") == 0) 
+            {   
+                interest= r.amount * 0.07;
+                printf("_____________________\n");
+                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
+
+            }
+            else if (strcmp(r.accountType, "fixed01") == 0) 
+            {   
+                interest= r.amount * 0.04;
+                printf("_____________________\n");
+                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
+
+            }
+            else if (strcmp(r.accountType, "fixed02") == 0)
+            {
+                interest= r.amount * 0.05;
+                printf("_____________________\n");  
+                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
+            }
+            else if (strcmp(r.accountType, "fixed03") == 0)
+            {
+                interest= r.amount * 0.08;
+                printf("_____________________\n");  
+                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
+            }
+            else if (strcmp(r.accountType, "current") == 0)
+            {
+                printf("_____________________\n");  
+                printf("You will not get interests because the account is of type current\n");
+            }
         }
     }
     fclose(pf);
