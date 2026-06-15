@@ -163,3 +163,39 @@ void checkAllAccounts(struct User u)
     fclose(pf);
     success(u);
 }
+
+void checkAcc(struct User u)
+{
+    int accNbr;
+    printf("\nEnter the account number:");
+    scanf("%d", &accNbr);
+
+    char userName[100];
+    struct Record r;
+    int found = 0;
+
+    FILE *pf = fopen(RECORDS, "r");
+    while (getAccountFromFile(pf, userName, &r))
+    {
+        if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
+        {   
+            printf("_____________________\n");
+            printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:%d \nAmount deposited: $%.2f \nType Of Account:%s\n",
+                   r.accountNbr,
+                   r.deposit.day,
+                   r.deposit.month,
+                   r.deposit.year,
+                   r.country,
+                   r.phone,
+                   r.amount,
+                   r.accountType);
+            found = 1;
+        }
+    }
+    fclose(pf);
+    if (!found)
+        stayOrReturn(0, checkAcc, u);
+    success(u);
+
+}
+      

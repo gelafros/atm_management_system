@@ -24,10 +24,12 @@ void mainMenu(struct User u)
     case 2:
         // student TODO : add your **Update account information** function
         // here
+        updateAcc(u);
         break;
     case 3:
         // student TODO : add your **Check the details of existing accounts** function
         // here
+        checkAcc(u);
         break;
     case 4:
         checkAllAccounts(u);
@@ -35,14 +37,17 @@ void mainMenu(struct User u)
     case 5:
         // student TODO : add your **Make transaction** function
         // here
+        makeTransaction(u);
         break;
     case 6:
         // student TODO : add your **Remove existing account** function
         // here
+        removeAcc(u);
         break;
     case 7:
         // student TODO : add your **Transfer owner** function
         // here
+        transferOwner(u);
         break;
     case 8:
         exit(1);
@@ -83,6 +88,12 @@ void initMenu(struct User *u)
         case 2:
             // student TODO : add your **Registration** function
             // here
+            printf("\n\n\t\"Type in a new Username and Password");
+            scanf("%s %s", u->name, u->password);
+            FILE *file = fopen("./data/users.txt", "a+");
+            fprintf(file, "%s %s\n", u->name, u->password);
+            fclose(file);
+
             r = 1;
             break;
         case 3:
