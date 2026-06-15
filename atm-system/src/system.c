@@ -360,6 +360,40 @@ void updateAcc(struct User u)
 
 }
 
+void removeAcc(struct User u)
+{
+    int accNbr;
+    printf("\nEnter the account number:");
+    scanf("%d", &accNbr);
+
+    char userName[100];
+    struct Record r;
+    int found = 0;
+
+    FILE *pf = fopen(RECORDS, "r");
+    FILE *temp = fopen("temp.txt", "w");
+    while (getAccountFromFile(pf, userName, &r))
+    {
+        if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
+        {
+            found = 1;
+        }
+        else
+        {
+            saveAccountToFile(temp, u, r);
+        }
+    }   
+    fclose(pf);
+    fclose(temp);
+    remove(RECORDS);
+    rename("temp.txt", RECORDS);
+    if (!found)
+        stayOrReturn(0, removeAcc, u);
+    success(u);
+}    
+
+
+
         
 
 
