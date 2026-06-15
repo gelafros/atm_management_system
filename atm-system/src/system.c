@@ -21,9 +21,9 @@ int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
 void saveAccountToFile(FILE *ptr, struct User u, struct Record r)
 {
     fprintf(ptr, "%d %d %s %d %d/%d/%d %s %d %.2lf %s\n\n",
-            &r->id,
-	    &u->id
-	    &u->name,
+            r.id,
+	        u.id,
+	        r.name,
             r.accountNbr,
             r.deposit.month,
             r.deposit.day,
@@ -198,4 +198,82 @@ void checkAcc(struct User u)
     success(u);
 
 }
-      
+
+void makeTransaction(struct User u)
+{
+    int accNbr;
+    printf("\nEnter the account number:");
+    scanf("%d", &accNbr);
+
+    char userName[100];
+    struct Record r;
+    int found = 0;
+    int DorW;
+    double deposit;
+    double withdraw;
+
+
+
+    FILE *pf = fopen(RECORDS, "r");
+    FILE  *temp = fopen("temp.txt", "w");
+    while (getAccountFromFile(pf, userName, &r))
+    {
+
+    if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
+        {
+            do
+            {
+            printf("_____________________\n");
+            printf("\nDeposit: 1 or Withdrawal: 2 ?");
+            scanf("%d", &DorW);
+            if (DorW == 1)
+            {   
+                printf("_____________________\n");
+                printf("\nEnter amount to deposit: $");
+                scanf("%lf", &deposit);
+                r.amount += deposit;
+                printf("_____________________\n");
+                printf("New balance: $%.2f\n", r.amount);
+                saveAccountToFile(temp, u, r);
+            }
+            if (DorW == 2)
+            {   
+                printf("_____________________\n");
+                printf("\nEnter amount to withdraw: $");
+                scanf("%lf", &withdraw);
+                if (r.amount >= withdraw)
+                {
+                    r.amount -= withdraw;
+                    printf("_____________________\n");
+                    printf("New balance: $%.2f\n", r.amount);
+                    saveAccountToFile(temp, u, r);
+                } else
+                {   
+                    printf("_____________________\n");
+                    printf("\nWithdrawal denied. Insufficient funds.");
+                    printf("Available balance: $%.2f\n", r.amount);
+                }
+            } 
+            }
+            while (DorW != 1 && DorW != 2);
+            found = 1;
+        } else
+            {
+            saveAccountToFile(temp, u, r);
+            }
+        
+    } 
+    fclose(pf);
+    fclose(temp);
+    remove(RECORDS);
+    rename("temp.txt", RECORDS);
+    if (!found)
+        stayOrReturn(0, makeTransaction, u);
+    success(u);
+}    
+
+
+
+    
+
+    

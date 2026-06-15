@@ -39,3 +39,5 @@ void createNewAcc(struct User u);
 void mainMenu(struct User u);
 void checkAllAccounts(struct User u);
 void checkAcc(struct User u);
+void makeTransaction(struct User u);
+
