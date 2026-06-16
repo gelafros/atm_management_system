@@ -403,7 +403,11 @@ void transferOwner(struct User u)
     char userName[100];
     char newUserName[100];
     struct Record r;
-    int found = 0;  
+    int found = 0;
+    int checkId;
+    char checkName[100];
+    char checkPass[100];
+   
 
     FILE *pf= fopen(RECORDS, "r");
     FILE *temp = fopen("temp.txt", "w");
@@ -414,17 +418,23 @@ void transferOwner(struct User u)
             printf("_____________________\n");
             printf("\nEnter the new owner name:");
             scanf("%s", newUserName);
-            
-            strcpy(r.name, newUserName);
-            saveAccountToFile(temp, r);
-            found = 1;
-        }
-        else
+           FILE *pf2 =fopen("./data/users.txt", "r");
+           while(fscanf(pf2, "%d %s %s", &checkId, checkName, checkPass) != EOF)
+           {
+               if(strcmp(checkName, newUserName) == 0)
+               {
+                   strcpy(r.name, newUserName);
+                   r.userId = checkId;
+                   found = 1;
+               }   
+           }
+           fclose(pf2);
+           saveAccountToFile(temp, r);
+        } else
         {
             saveAccountToFile(temp, r);
         }
-    }
-
+    }      
     fclose(pf);
     fclose(temp);
     remove(RECORDS);
@@ -432,7 +442,7 @@ void transferOwner(struct User u)
     if (!found)
         stayOrReturn(0, transferOwner, u);
     success(u);
-}
+    }
 
 
 
