@@ -18,11 +18,11 @@ int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
                   r->accountType) != EOF;
 }
 
-void saveAccountToFile(FILE *ptr, struct User u, struct Record r)
+void saveAccountToFile(FILE *ptr, struct Record r)
 {
     fprintf(ptr, "%d %d %s %d %d/%d/%d %s %d %.2lf %s\n\n",
             r.id,
-	        u.id,
+	        r.userId,
 	        r.name,
             r.accountNbr,
             r.deposit.month,
@@ -129,7 +129,9 @@ noAccount:
     printf("\nChoose the type of account:\n\t-> saving\n\t-> current\n\t-> fixed01(for 1 year)\n\t-> fixed02(for 2 years)\n\t-> fixed03(for 3 years)\n\n\tEnter your choice:");
     scanf("%s", r.accountType);
 
-    saveAccountToFile(pf, u, r);
+    r.userId = u.id;
+    strcpy(r.name, u.name);
+    saveAccountToFile(pf, r);
 
     fclose(pf);
     success(u);
@@ -267,7 +269,7 @@ void makeTransaction(struct User u)
                 r.amount += deposit;
                 printf("_____________________\n");
                 printf("New balance: $%.2f\n", r.amount);
-                saveAccountToFile(temp, u, r);
+                saveAccountToFile(temp, r);
             }
             if (DorW == 2)
             {   
@@ -279,7 +281,7 @@ void makeTransaction(struct User u)
                     r.amount -= withdraw;
                     printf("_____________________\n");
                     printf("New balance: $%.2f\n", r.amount);
-                    saveAccountToFile(temp, u, r);
+                    saveAccountToFile(temp, r);
                 } else
                 {   
                     printf("_____________________\n");
@@ -292,7 +294,7 @@ void makeTransaction(struct User u)
             found = 1;
         } else
             {
-            saveAccountToFile(temp, u, r);
+        saveAccountToFile(temp, r);
             }
         
     } 
@@ -334,20 +336,20 @@ void updateAcc(struct User u)
                     printf("_____________________\n");
                     printf("\nEnter the new phone number:");
                     scanf("%d", &r.phone);
-                    saveAccountToFile(temp, u, r);
+                saveAccountToFile(temp, r);
                 }
                 else if (found == 2)
                 {
                     printf("_____________________\n");
                     printf("\nEnter the new country:");
                     scanf("%s", r.country);
-                    saveAccountToFile(temp, u, r);
+                saveAccountToFile(temp, r);
                 }
             } while(found != 1 && found != 2);
         }
         else
         {
-            saveAccountToFile(temp, u, r);  
+        saveAccountToFile(temp, r);  
         }
     }
     fclose(pf);
@@ -380,7 +382,7 @@ void removeAcc(struct User u)
         }
         else
         {
-            saveAccountToFile(temp, u, r);
+            saveAccountToFile(temp, r);
         }
     }   
     fclose(pf);
@@ -414,12 +416,12 @@ void transferOwner(struct User u)
             scanf("%s", newUserName);
             
             strcpy(r.name, newUserName);
-            saveAccountToFile(temp, u, r);
+            saveAccountToFile(temp, r);
             found = 1;
         }
         else
         {
-            saveAccountToFile(temp, u, r);
+            saveAccountToFile(temp, r);
         }
     }
 
