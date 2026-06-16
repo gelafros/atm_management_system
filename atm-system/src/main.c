@@ -54,7 +54,7 @@ void mainMenu(struct User u)
         exit(1);
         break;
     default:
-        printf("Invalid operation!\n");
+        printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
     }
 };
 
@@ -77,11 +77,11 @@ void initMenu(struct User *u)
             loginMenu(u->name, u->password);
             if (strcmp(u->password, getPassword(*u)) == 0)
             {
-                printf("\n\nPassword Match!");
+                printf("%s\n\n✔ Password Match! Welcome back.%s\n", COLOR_GREEN, COLOR_RESET);
             }
             else
             {
-                printf("\nWrong password!! or User Name\n");
+                printf("%s\n✖ Login failed! Incorrect username or password.%s\n", COLOR_RED, COLOR_RESET);
                 exit(1);
             }
             r = 1;
@@ -89,7 +89,7 @@ void initMenu(struct User *u)
         case 2:
             // student TODO : add your **Registration** function
             // here
-            printf("\n\n\t\"Type in a new Username and Password");
+            printf("\n\n\t\"Type in a new Username and Password:");
             scanf("%s %s", u->name, u->password);
             FILE *file = fopen("./data/users.txt", "a+");
                 
@@ -102,7 +102,7 @@ void initMenu(struct User *u)
                 {
                     if(strcmp(checkName, u->name) == 0)
                     {
-                        printf("Users with the same name can not exist\n");
+                        printf("%s\n✖ Registration failed! A user with this name already exists.%s\n", COLOR_RED, COLOR_RESET);
                         exit(1);
                     }else{   
                     lastID = checkId;
@@ -122,7 +122,7 @@ void initMenu(struct User *u)
             exit(1);
             break;
         default:
-            printf("Insert a valid operation!\n");
+            printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
         }
     }
 };

@@ -40,7 +40,7 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
     if (notGood == 0)
     {
         system("clear");
-        printf("\n✖ Record not found!!\n");
+        printf("%s\n✖ Oops! We couldn't find a record matching that account.%s\n", COLOR_RED, COLOR_RESET);
     invalid:
         printf("\nEnter 0 to try again, 1 to return to main menu and 2 to exit:");
         scanf("%d", &option);
@@ -52,7 +52,7 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
             exit(0);
         else
         {
-            printf("Insert a valid operation!\n");
+            printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
             goto invalid;
         }
     }
@@ -76,7 +76,7 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
 void success(struct User u)
 {
     int option;
-    printf("\n✔ Success!\n\n");
+    printf("%s\n✔ Success! The operation was completed successfully.%s\n\n", COLOR_GREEN, COLOR_RESET);
 invalid:
     printf("Enter 1 to go to the main menu and 0 to exit!\n");
     scanf("%d", &option);
@@ -91,7 +91,7 @@ invalid:
     }
     else
     {
-        printf("Insert a valid operation!\n");
+        printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
         goto invalid;
     }
 }
@@ -116,7 +116,7 @@ noAccount:
     {
         if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr)
         {
-            printf("✖ This Account already exists for this user\n\n");
+            printf("%s✖ This account number is already in use by this user. Please try a different one.%s\n\n", COLOR_RED, COLOR_RESET);
             goto noAccount;
         }
     }
@@ -263,7 +263,7 @@ void makeTransaction(struct User u)
             if (strcmp(r.accountType, "fixed01") == 0 || strcmp(r.accountType, "fixed02") == 0 || strcmp(r.accountType, "fixed03") == 0)
             {
                 printf("_____________________\n");
-                printf("\nTransactions are not allowed for fixed accounts.\n");
+                printf("%s\n✖ Transactions (deposits/withdrawals) are not allowed for fixed-term accounts.%s\n", COLOR_RED, COLOR_RESET);
                 saveAccountToFile(temp, r);
                 found = 1;
             }
@@ -298,7 +298,7 @@ void makeTransaction(struct User u)
                 } else
                 {   
                     printf("_____________________\n");
-                    printf("\nWithdrawal denied. Insufficient funds.");
+                    printf("%s\n✖ Withdrawal denied. Insufficient funds.%s\n", COLOR_RED, COLOR_RESET);
                     printf("Available balance: $%.2f\n", r.amount);
                 }
             } 
