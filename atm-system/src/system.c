@@ -222,7 +222,7 @@ void checkAcc(struct User u)
     // Calculate and display monthly interest based on the account type
             if (strcmp(r.accountType, "savings") == 0) 
             {   
-                interest= r.amount * 0.07;
+            interest= (r.amount * 0.07) / 12;
                 printf("_____________________\n");
                 printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
 
@@ -231,20 +231,20 @@ void checkAcc(struct User u)
             {   
                 interest= r.amount * 0.04;
                 printf("_____________________\n");
-                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
+            printf("You will get $%.2f as interest on %d/%d/%d\n",interest, r.deposit.month, r.deposit.day, r.deposit.year + 1);
 
             }
             else if (strcmp(r.accountType, "fixed02") == 0)
             {
                 interest= r.amount * 0.05;
                 printf("_____________________\n");  
-                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
+            printf("You will get $%.2f as interest on %d/%d/%d\n",interest, r.deposit.month, r.deposit.day, r.deposit.year + 2);
             }
             else if (strcmp(r.accountType, "fixed03") == 0)
             {
                 interest= r.amount * 0.08;
                 printf("_____________________\n");  
-                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
+            printf("You will get $%.2f as interest on %d/%d/%d\n",interest, r.deposit.month, r.deposit.day, r.deposit.year + 3);
             }
             else if (strcmp(r.accountType, "current") == 0)
             {
