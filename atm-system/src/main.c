@@ -94,6 +94,15 @@ void initMenu(struct User *u)
             while (getchar() != '\n'); // Clear the newline left in the buffer
             printf("\n\t\"Type in a new Password: ");
             getMaskedPassword(u->password);
+            
+            // Encrypt the password using a Caesar cipher (shift by +3) before saving
+            int p_idx = 0;
+            while (u->password[p_idx] != '\0')
+            {
+                u->password[p_idx] = u->password[p_idx] + 3;
+                p_idx++;
+            }
+            
             FILE *file = fopen("./data/users.txt", "a+");
                 
                 // Scan the existing users to ensure uniqueness and find the highest ID

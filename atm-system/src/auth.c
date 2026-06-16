@@ -59,13 +59,26 @@ const char *getPassword(struct User u)
         exit(1);
     }
 
-    while (fscanf(fp, "%s %s", userChecker.name, userChecker.password) != EOF)
+    // Fix: fscanf must read the ID first before the name and password!
+    while (fscanf(fp, "%d %s %s", &userChecker.id, userChecker.name, userChecker.password) != EOF)
     {
         if (strcmp(userChecker.name, u.name) == 0)
         {
             fclose(fp);
-            char *buff = userChecker.password;
-            return buff;
+            
+            // Use a static buffer to safely return the decrypted password
+            static char decrypted[50];
+            strcpy(decrypted, userChecker.password);
+            
+            // Decrypt the password (shift back by -3)
+            int i = 0;
+            while (decrypted[i] != '\0')
+            {
+                decrypted[i] = decrypted[i] - 3;
+                i++;
+            }
+            
+            return decrypted;
         }
     }
 
