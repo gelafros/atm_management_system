@@ -91,7 +91,23 @@ void initMenu(struct User *u)
             printf("\n\n\t\"Type in a new Username and Password");
             scanf("%s %s", u->name, u->password);
             FILE *file = fopen("./data/users.txt", "a+");
-            fprintf(file, "%s %s\n", u->name, u->password);
+                int lastID=-1;
+                char checkName[100];
+                char checkPass[100];
+                int checkId;
+                while((fscanf(file, "%d %s %s", &checkId, checkName, checkPass) != EOF))
+                {
+                    if(strcmp(checkName, u->name) == 0)
+                    {
+                        printf("Users with the same name can not exist\n");
+                        exit(1);
+                    }else{   
+                    lastID = checkId;
+                    }
+                }
+                u->id = lastID + 1;
+                
+            fprintf(file, "%d %s %s\n",u->id, u->name, u->password);
             fclose(file);
 
             r = 1;
