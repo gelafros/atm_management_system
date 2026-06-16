@@ -89,8 +89,11 @@ void initMenu(struct User *u)
         case 2:
             // student TODO : add your **Registration** function
             // here
-            printf("\n\n\t\"Type in a new Username and Password:");
-            scanf("%s %s", u->name, u->password);
+            printf("\n\n\t\"Type in a new Username: ");
+            scanf("%s", u->name);
+            while (getchar() != '\n'); // Clear the newline left in the buffer
+            printf("\n\t\"Type in a new Password: ");
+            getMaskedPassword(u->password);
             FILE *file = fopen("./data/users.txt", "a+");
                 
                 // Scan the existing users to ensure uniqueness and find the highest ID

@@ -39,6 +39,7 @@ struct User
 void loginMenu(char a[50], char pass[50]);
 void registerMenu(char a[50], char pass[50]);
 const char *getPassword(struct User u);
+void getMaskedPassword(char *password);
 
 // system function
 void createNewAcc(struct User u);
