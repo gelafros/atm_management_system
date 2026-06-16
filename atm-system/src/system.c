@@ -256,6 +256,15 @@ void makeTransaction(struct User u)
 
     if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
         {
+            if (strcmp(r.accountType, "fixed01") == 0 || strcmp(r.accountType, "fixed02") == 0 || strcmp(r.accountType, "fixed03") == 0)
+            {
+                printf("_____________________\n");
+                printf("\nTransactions are not allowed for fixed accounts.\n");
+                saveAccountToFile(temp, r);
+                found = 1;
+            }
+            else
+            {
             do
             {
             printf("_____________________\n");
@@ -292,12 +301,14 @@ void makeTransaction(struct User u)
             }
             while (DorW != 1 && DorW != 2);
             found = 1;
+            }
         } else
             {
         saveAccountToFile(temp, r);
             }
         
-    } 
+        } 
+    }    
     fclose(pf);
     fclose(temp);
     remove(RECORDS);
