@@ -3,6 +3,8 @@
 
 char *USERS = "./data/users.txt";
 
+// getMaskedPassword reads user input from the terminal without echoing it, displaying asterisks instead.
+// It temporarily disables canonical mode and terminal echo to securely capture the password.
 void getMaskedPassword(char *password)
 {
     struct termios oldt, newt;
@@ -37,6 +39,8 @@ void getMaskedPassword(char *password)
     tcsetattr(fileno(stdin), TCSANOW, &oldt);
 }
 
+// loginMenu prompts the user to enter their username and securely input their password.
+// It clears the terminal before displaying the bank management system login interface.
 void loginMenu(char a[50], char pass[50])
 {
     system("clear");
@@ -48,6 +52,8 @@ void loginMenu(char a[50], char pass[50])
     getMaskedPassword(pass);
 }
 
+// getPassword retrieves and decrypts the password for a given user from the users data file.
+// It returns a pointer to a static buffer containing the decrypted password, or an error string if the user is not found.
 const char *getPassword(struct User u)
 {
     FILE *fp;

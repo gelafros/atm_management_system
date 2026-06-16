@@ -1,8 +1,9 @@
 #include "header.h"
 
+// mainMenu displays the primary ATM operations available to an authenticated user and handles their selection.
+// It routes the user to various system functions like creating accounts, making transactions, and checking balances.
 void mainMenu(struct User u)
 {
-    // Displays the main operations available to a logged-in user
     int option;
     system("clear");
     printf("\n\n\t\t======= ATM =======\n\n");
@@ -63,6 +64,8 @@ void mainMenu(struct User u)
     }
 };
 
+// initMenu displays the initial welcome screen, allowing users to log in or register a new account securely.
+// It manages password encryption, ensures usernames are unique during registration, and assigns sequential user IDs.
 void initMenu(struct User *u)
 {
     int r = 0;
@@ -147,6 +150,7 @@ void initMenu(struct User *u)
     }
 };
 
+// main is the entry point of the ATM Management System, initializing the session and launching the interface.
 int main()
 {
     struct User u;
