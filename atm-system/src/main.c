@@ -2,6 +2,7 @@
 
 void mainMenu(struct User u)
 {
+    // Displays the main operations available to a logged-in user
     int option;
     system("clear");
     printf("\n\n\t\t======= ATM =======\n\n");
@@ -91,6 +92,8 @@ void initMenu(struct User *u)
             printf("\n\n\t\"Type in a new Username and Password");
             scanf("%s %s", u->name, u->password);
             FILE *file = fopen("./data/users.txt", "a+");
+                
+                // Scan the existing users to ensure uniqueness and find the highest ID
                 int lastID=-1;
                 char checkName[100];
                 char checkPass[100];
@@ -105,8 +108,11 @@ void initMenu(struct User *u)
                     lastID = checkId;
                     }
                 }
+                
+                // Auto-increment the new user's ID based on the last found ID
                 u->id = lastID + 1;
                 
+            // Append the fully formed user record to the file
             fprintf(file, "%d %s %s\n",u->id, u->name, u->password);
             fclose(file);
 

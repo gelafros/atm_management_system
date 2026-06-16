@@ -194,6 +194,8 @@ void checkAcc(struct User u)
                    r.amount,
                    r.accountType);
             found = 1;
+    
+    // Calculate and display monthly interest based on the account type
             if (strcmp(r.accountType, "savings") == 0) 
             {   
                 interest= r.amount * 0.07;
@@ -251,11 +253,13 @@ void makeTransaction(struct User u)
 
     FILE *pf = fopen(RECORDS, "r");
     FILE  *temp = fopen("temp.txt", "w");
+    // Iterate through all records, copying them to a temp file, modifying only the target record
     while (getAccountFromFile(pf, userName, &r))
     {
 
     if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
         {
+            // Reject transactions for fixed-term deposit accounts
             if (strcmp(r.accountType, "fixed01") == 0 || strcmp(r.accountType, "fixed02") == 0 || strcmp(r.accountType, "fixed03") == 0)
             {
                 printf("_____________________\n");
@@ -303,14 +307,15 @@ void makeTransaction(struct User u)
             found = 1;
             }
         } else
-            {
-        saveAccountToFile(temp, r);
-            }
+        {
+            saveAccountToFile(temp, r);
+        }
         
-        } 
-    }    
+    }
     fclose(pf);
     fclose(temp);
+    
+    // Replace the old records file with the updated temporary file
     remove(RECORDS);
     rename("temp.txt", RECORDS);
     if (!found)
@@ -357,7 +362,7 @@ void updateAcc(struct User u)
                 saveAccountToFile(temp, r);
                 }
             } while(found != 1 && found != 2);
-        }
+        } 
         else
         {
         saveAccountToFile(temp, r);  
@@ -369,7 +374,7 @@ void updateAcc(struct User u)
     rename("temp.txt", RECORDS);
     if (!found)
         stayOrReturn(0, updateAcc, u);
-    success(u);
+        success(u);
 
 }
 
@@ -398,6 +403,8 @@ void removeAcc(struct User u)
     }   
     fclose(pf);
     fclose(temp);
+    
+    // Replace the old records file with the updated temporary file
     remove(RECORDS);
     rename("temp.txt", RECORDS);
     if (!found)
@@ -429,6 +436,8 @@ void transferOwner(struct User u)
             printf("_____________________\n");
             printf("\nEnter the new owner name:");
             scanf("%s", newUserName);
+            
+           // Verify the target user exists and fetch their ID before transferring ownership
            FILE *pf2 =fopen("./data/users.txt", "r");
            while(fscanf(pf2, "%d %s %s", &checkId, checkName, checkPass) != EOF)
            {
@@ -448,6 +457,8 @@ void transferOwner(struct User u)
     }      
     fclose(pf);
     fclose(temp);
+    
+    // Replace the old records file with the updated temporary file
     remove(RECORDS);
     rename("temp.txt", RECORDS);
     if (!found)
