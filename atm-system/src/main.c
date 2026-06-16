@@ -15,7 +15,11 @@ void mainMenu(struct User u)
     printf("\n\t\t[6]- Remove existing account\n");
     printf("\n\t\t[7]- Transfer ownership\n");
     printf("\n\t\t[8]- Exit\n");
-    scanf("%d", &option);
+    
+    if (scanf("%d", &option) != 1) {
+        while (getchar() != '\n'); // Clear the input buffer
+        option = -1; // Set to invalid option
+    }
 
     switch (option)
     {
@@ -55,6 +59,7 @@ void mainMenu(struct User u)
         break;
     default:
         printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
+        mainMenu(u); // Prompt again instead of closing the program
     }
 };
 
@@ -70,7 +75,10 @@ void initMenu(struct User *u)
     printf("\n\t\t[3]- exit\n");
     while (!r)
     {
-        scanf("%d", &option);
+        if (scanf("%d", &option) != 1) {
+            while (getchar() != '\n'); // Clear the input buffer
+            option = -1; // Set to invalid option
+        }
         switch (option)
         {
         case 1:

@@ -1,7 +1,10 @@
 #include "header.h"
 
+// RECORDS is the default file path for storing all account records.
 const char *RECORDS = "./data/records.txt";
 
+// getAccountFromFile reads a single account record from the provided file pointer into the Record struct.
+// It returns 1 if a record was successfully read, or 0 if it reached the end of the file (EOF).
 int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
 {
     return fscanf(ptr, "%d %d %s %d %d/%d/%d %s %d %lf %s",
@@ -18,6 +21,8 @@ int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
                   r->accountType) != EOF;
 }
 
+// saveAccountToFile writes the details of a single Record struct to the provided file pointer.
+// It ensures the data is formatted consistently with spacing and newlines for future retrieval.
 void saveAccountToFile(FILE *ptr, struct Record r)
 {
     fprintf(ptr, "%d %d %s %d %d/%d/%d %s %d %.2lf %s\n\n",
@@ -34,6 +39,8 @@ void saveAccountToFile(FILE *ptr, struct Record r)
             r.accountType);
 }
 
+// stayOrReturn prompts the user to either retry the current operation, return to the main menu, or exit the program.
+// It handles cases where an account is not found (notGood == 0) or simply serves as a navigation prompt.
 void stayOrReturn(int notGood, void f(struct User u), struct User u)
 {
     int option;
@@ -43,7 +50,10 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
         printf("%s\n✖ Oops! We couldn't find a record matching that account.%s\n", COLOR_RED, COLOR_RESET);
     invalid:
         printf("\nEnter 0 to try again, 1 to return to main menu and 2 to exit:");
-        scanf("%d", &option);
+        if (scanf("%d", &option) != 1) {
+            while (getchar() != '\n');
+            option = -1;
+        }
         if (option == 0)
             f(u);
         else if (option == 1)
@@ -59,7 +69,10 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
     else
     {
         printf("\nEnter 1 to go to the main menu and 0 to exit:");
-        scanf("%d", &option);
+        if (scanf("%d", &option) != 1) {
+            while (getchar() != '\n');
+            option = -1;
+        }
     }
     if (option == 1)
     {
@@ -73,13 +86,18 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
     }
 }
 
+// success displays a positive confirmation message and prompts the user to navigate back to the menu or exit.
+// It prevents the terminal from immediately closing or clearing before the user has a chance to read the result.
 void success(struct User u)
 {
     int option;
     printf("%s\n✔ Success! The operation was completed successfully.%s\n\n", COLOR_GREEN, COLOR_RESET);
 invalid:
     printf("Enter 1 to go to the main menu and 0 to exit!\n");
-    scanf("%d", &option);
+    if (scanf("%d", &option) != 1) {
+        while (getchar() != '\n');
+        option = -1;
+    }
     system("clear");
     if (option == 1)
     {
@@ -96,6 +114,8 @@ invalid:
     }
 }
 
+// createNewAcc prompts the user to input details for a new bank account and appends it to the records file.
+// It prevents duplicate account numbers for the same user and initializes the account balance.
 void createNewAcc(struct User u)
 {
     struct Record r;
@@ -137,6 +157,8 @@ noAccount:
     success(u);
 }
 
+// checkAllAccounts retrieves and displays a formatted list of all bank accounts associated with the logged-in user.
+// It iterates through the entire records file and filters by the user's name.
 void checkAllAccounts(struct User u)
 {
     char userName[100];
@@ -166,6 +188,8 @@ void checkAllAccounts(struct User u)
     success(u);
 }
 
+// checkAcc prompts the user for an account number and displays its details if it belongs to them.
+// It also calculates and displays the expected monthly interest yield based on the specific account type.
 void checkAcc(struct User u)
 {
     int accNbr;
@@ -236,6 +260,8 @@ void checkAcc(struct User u)
 
 }
 
+// makeTransaction handles depositing and withdrawing funds for a given account.
+// It validates that the account is not a fixed-term deposit (which rejects transactions) and prevents overdrafts.
 void makeTransaction(struct User u)
 {
     int accNbr;
@@ -273,7 +299,10 @@ void makeTransaction(struct User u)
             {
             printf("_____________________\n");
             printf("\nDeposit: 1 or Withdrawal: 2 ?");
-            scanf("%d", &DorW);
+            if (scanf("%d", &DorW) != 1) {
+                while (getchar() != '\n');
+                DorW = -1;
+            }
             if (DorW == 1)
             {   
                 printf("_____________________\n");
@@ -324,6 +353,8 @@ void makeTransaction(struct User u)
 }    
 
 
+// updateAcc allows the user to modify the phone number or country associated with a specific account.
+// It rewrites the records file, replacing the old account details with the updated values.
 void updateAcc(struct User u)
 {
 
@@ -346,7 +377,10 @@ void updateAcc(struct User u)
                 printf("_____________________\n");
                 printf("What do you want to update?\n");
                 printf("Phone number:1  or country:2 ?");
-                scanf("%d", &found);
+                if (scanf("%d", &found) != 1) {
+                    while (getchar() != '\n');
+                    found = -1;
+                }
                 if (found == 1)
                 {
                     printf("_____________________\n");
@@ -378,6 +412,8 @@ void updateAcc(struct User u)
 
 }
 
+// removeAcc deletes a specific account from the system.
+// It accomplishes this by copying every other account to a temporary file, skipping the target account, and then replacing the original file.
 void removeAcc(struct User u)
 {
     int accNbr;
@@ -412,6 +448,8 @@ void removeAcc(struct User u)
     success(u);
 }    
 
+// transferOwner reassigns the ownership of a given account to another registered user.
+// It verifies the target user's existence in the system and updates both the account name and user ID securely.
 void transferOwner(struct User u)
 {
     int accNbr;
