@@ -188,7 +188,6 @@ void checkAllAccounts(struct User u)
     struct Record r;
 
     FILE *pf = fopen(RECORDS, "r");
-
     system("clear");
     printf("\t\t====== All accounts from user, %s =====\n\n", u.name);
     while (getAccountFromFile(pf, userName, &r))
