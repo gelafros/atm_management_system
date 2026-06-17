@@ -131,6 +131,8 @@ void createNewAcc(struct User u)
     struct Record cr;
     char userName[50];
     int lastId = -1;
+    time_t t = time(NULL);
+    struct tm *today = localtime(&t);
     FILE *pf = fopen(RECORDS, "a+");
 
 noAccount:
@@ -139,6 +141,14 @@ noAccount:
 
     printf("\nEnter today's date(mm/dd/yyyy):");
     scanf("%d/%d/%d", &r.deposit.month, &r.deposit.day, &r.deposit.year);
+    if (r.deposit.month != (today->tm_mon + 1) ||
+        r.deposit.day   != today->tm_mday       ||
+        r.deposit.year  != (today->tm_year + 1900))
+    {     printf("%s✖ Please enter today's date only!%s\n", COLOR_RED, COLOR_RESET);
+    goto noAccount;
+    
+    }else
+    {
     printf("\nEnter the account number:");
     scanf("%d", &r.accountNbr);
 
@@ -167,6 +177,7 @@ noAccount:
 
     fclose(pf);
     success(u);
+    }  
 }
 
 // checkAllAccounts retrieves and displays a formatted list of all bank accounts associated with the logged-in user.
