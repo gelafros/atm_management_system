@@ -55,11 +55,20 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
             option = -1;
         }
         if (option == 0)
+        {
             f(u);
+            return;
+        }    
         else if (option == 1)
+        { 
             mainMenu(u);
+            return;
+        }    
         else if (option == 2)
+        {
             exit(0);
+            return;
+        }    
         else
         {
             printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
@@ -121,6 +130,7 @@ void createNewAcc(struct User u)
     struct Record r;
     struct Record cr;
     char userName[50];
+    int lastId = -1;
     FILE *pf = fopen(RECORDS, "a+");
 
 noAccount:
@@ -139,6 +149,7 @@ noAccount:
             printf("%s✖ This account number is already in use by this user. Please try a different one.%s\n\n", COLOR_RED, COLOR_RESET);
             goto noAccount;
         }
+        lastId = cr.id;
     }
     printf("\nEnter the country:");
     scanf("%s", r.country);
@@ -150,6 +161,7 @@ noAccount:
     scanf("%s", r.accountType);
 
     r.userId = u.id;
+    r.id = lastId + 1;
     strcpy(r.name, u.name);
     saveAccountToFile(pf, r);
 
@@ -175,8 +187,8 @@ void checkAllAccounts(struct User u)
             printf("_____________________\n");
             printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:%d \nAmount deposited: $%.2f \nType Of Account:%s\n",
                    r.accountNbr,
-                   r.deposit.day,
                    r.deposit.month,
+                   r.deposit.day,
                    r.deposit.year,
                    r.country,
                    r.phone,
@@ -210,8 +222,8 @@ void checkAcc(struct User u)
             printf("_____________________\n");
             printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:%d \nAmount deposited: $%.2f \nType Of Account:%s\n",
                    r.accountNbr,
-                   r.deposit.day,
                    r.deposit.month,
+                   r.deposit.day,
                    r.deposit.year,
                    r.country,
                    r.phone,
@@ -329,6 +341,7 @@ void makeTransaction(struct User u)
                     printf("_____________________\n");
                     printf("%s\n✖ Withdrawal denied. Insufficient funds.%s\n", COLOR_RED, COLOR_RESET);
                     printf("Available balance: $%.2f\n", r.amount);
+                    saveAccountToFile(temp,r);
                 }
             } 
             }
