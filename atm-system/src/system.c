@@ -208,21 +208,59 @@ noAccount:
         }
         lastId = cr.id;
     }
-    printf("\nEnter the country:");
-    scanf("%s", r.country);
-    int code = getCountryCode(r.country);
-    if (code == -1)
+    int code = -1;
+    while (code == -1)
     {
-        printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, r.country, COLOR_RESET);
-        sleep(2);
-        goto noAccount;
+        printf("\nEnter the country: ");
+        scanf("%s", r.country);
+        code = getCountryCode(r.country);
+        if (code == -1)
+            printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, r.country, COLOR_RESET);
     }
     printf("\n%sCountry code: +%d%s", COLOR_GREEN, code, COLOR_RESET);
-    printf("\nEnter phone number (with country code e.g. %d...): ", code);
-    scanf("%lld", &r.phone);
+    char phoneStr[20];
+    int phoneValid = 0;
+    while (!phoneValid)
+    {
+        printf("\nEnter phone number (with country code e.g. %d...): ", code);
+        scanf("%19s", phoneStr);
+        while (getchar() != '\n'); // Clear leftover input from buffer
+
+        int len = strlen(phoneStr);
+
+        // Check all characters are digits
+        int digitsOnly = 1;
+        for (int i = 0; i < len; i++)
+        {
+            if (phoneStr[i] < '0' || phoneStr[i] > '9')
+            {
+                digitsOnly = 0;
+                break;
+            }
+        }
+
+        // Check length is within international standard (8-15 digits)
+        if (!digitsOnly)
+            printf("%s✖ Phone number must contain digits only (no spaces or dashes).%s\n", COLOR_RED, COLOR_RESET);
+        else if (len < 8 || len > 15)
+            printf("%s✖ Phone number must be between 8 and 15 digits.%s\n", COLOR_RED, COLOR_RESET);
+        else
+        {
+            // Check it starts with the country code
+            char codeStr[10];
+            sprintf(codeStr, "%d", code);
+            if (strncmp(phoneStr, codeStr, strlen(codeStr)) != 0)
+                printf("%s✖ Phone number must start with the country code %d.%s\n", COLOR_RED, code, COLOR_RESET);
+            else
+            {
+                r.phone = atoll(phoneStr);
+                phoneValid = 1;
+            }
+        }
+    }
     printf("\nEnter amount to deposit: $");
     scanf("%lf", &r.amount);
-    printf("\nChoose the type of account:\n\t-> saving\n\t-> current\n\t-> fixed01(for 1 year)\n\t-> fixed02(for 2 years)\n\t-> fixed03(for 3 years)\n\n\tEnter your choice:");
+    printf("\nChoose the type of account:\n\t->1. saving\n\t->2. current\n\t->3. fixed01(for 1 year)\n\t->4. fixed02(for 2 years)\n\t->5. fixed03(for 3 years)\n\n\tEnter your choice:");
     scanf("%s", r.accountType);
 
     r.userId = u.id;
@@ -241,6 +279,7 @@ void checkAllAccounts(struct User u)
 {
     char userName[100];
     struct Record r;
+    int found = 0;
 
     FILE *pf = fopen(RECORDS, "r");
     system("clear");
@@ -249,6 +288,7 @@ void checkAllAccounts(struct User u)
     {
         if (strcmp(userName, u.name) == 0)
         {
+            found = 1;
             printf("_____________________\n");
             printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:+%lld \nAmount deposited: $%.2f \nType Of Account:%s\n",
                    r.accountNbr,
@@ -262,6 +302,12 @@ void checkAllAccounts(struct User u)
         }
     }
     fclose(pf);
+    if (!found)
+    {
+        printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
+        stayOrReturn(1, checkAllAccounts, u);
+        return;
+    }
     success(u);
 }
 
@@ -283,10 +329,19 @@ void checkAcc(struct User u)
     {
         if (strcmp(userName, u.name) == 0)
         {
+            found = 1;
             printf("_____________________\n");
             printf("\nAccount number: %d | Type: %s | Balance: $%.2f\n",
                    r.accountNbr, r.accountType, r.amount);
         }
+    }
+
+    if (!found)
+    {
+        printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
+        fclose(pf);
+        stayOrReturn(1, checkAcc, u);
+        return;
     }
 
     // Then ask the user to pick one
