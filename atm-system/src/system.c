@@ -260,8 +260,33 @@ noAccount:
     }
     printf("\nEnter amount to deposit: $");
     scanf("%lf", &r.amount);
-    printf("\nChoose the type of account:\n\t->1. saving\n\t->2. current\n\t->3. fixed01(for 1 year)\n\t->4. fixed02(for 2 years)\n\t->5. fixed03(for 3 years)\n\n\tEnter your choice:");
-    scanf("%s", r.accountType);
+    int typeChoice = 0;
+    while (typeChoice < 1 || typeChoice > 5)
+    {
+        printf("\nChoose the type of account:\n");
+        printf("\t[1] Saving\n");
+        printf("\t[2] Current\n");
+        printf("\t[3] Fixed - 1 year  (4%% interest)\n");
+        printf("\t[4] Fixed - 2 years (5%% interest)\n");
+        printf("\t[5] Fixed - 3 years (8%% interest)\n");
+        printf("\n\tEnter your choice: ");
+        if (scanf("%d", &typeChoice) != 1)
+        {
+            while (getchar() != '\n');
+            typeChoice = 0;
+        }
+        switch (typeChoice)
+        {
+            case 1: strcpy(r.accountType, "saving");  break;
+            case 2: strcpy(r.accountType, "current"); break;
+            case 3: strcpy(r.accountType, "fixed01"); break;
+            case 4: strcpy(r.accountType, "fixed02"); break;
+            case 5: strcpy(r.accountType, "fixed03"); break;
+            default:
+                printf("%s✖ Invalid choice. Please enter a number between 1 and 5.%s\n", COLOR_RED, COLOR_RESET);
+                typeChoice = 0;
+        }
+    }
 
     r.userId = u.id;
     r.id = lastId + 1;
