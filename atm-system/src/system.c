@@ -566,6 +566,13 @@ void updateAcc(struct User u)
     int accNbr;
     printf("\nEnter the account number:");
     scanf("%d", &accNbr);
+
+    char userName[100];
+    struct Record r;
+    int found = 0;
+
+    FILE *pf = fopen(RECORDS, "r");
+    FILE *temp = fopen("temp.txt", "w");
     while (getAccountFromFile(pf, userName, &r))
     {
         if(strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
@@ -624,6 +631,13 @@ void removeAcc(struct User u)
     int accNbr;
     printf("\nEnter the account number:");
     scanf("%d", &accNbr);
+
+    char userName[100];
+    struct Record r;
+    int found = 0;
+
+    FILE *pf = fopen(RECORDS, "r");
+    FILE *temp = fopen("temp.txt", "w");
     while (getAccountFromFile(pf, userName, &r))
     {
         if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
