@@ -85,15 +85,18 @@ void initMenu(struct User *u)
         switch (option)
         {
         case 1:
+            login:
             loginMenu(u->name, u->password);
             if (strcmp(u->password, getPassword(*u)) == 0)
             {
                 printf("%s\n\n✔ Password Match! Welcome back.%s\n", COLOR_GREEN, COLOR_RESET);
+                sleep(2);
             }
             else
             {
                 printf("%s\n✖ Login failed! Incorrect username or password.%s\n", COLOR_RED, COLOR_RESET);
-                exit(1);
+                sleep(2);
+                goto login;
             }
             r = 1;
             break;

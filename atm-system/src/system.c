@@ -7,7 +7,7 @@ const char *RECORDS = "./data/records.txt";
 // It returns 1 if a record was successfully read, or 0 if it reached the end of the file (EOF).
 int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
 {
-    return fscanf(ptr, "%d %d %s %d %d/%d/%d %s %d %lf %s",
+    return fscanf(ptr, "%d %d %s %d %d/%d/%d %s %lld %lf %s",
                   &r->id,
 		  &r->userId,
 		  name,
@@ -25,7 +25,7 @@ int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
 // It ensures the data is formatted consistently with spacing and newlines for future retrieval.
 void saveAccountToFile(FILE *ptr, struct Record r)
 {
-    fprintf(ptr, "%d %d %s %d %d/%d/%d %s %d %.2lf %s\n\n",
+    fprintf(ptr, "%d %d %s %d %d/%d/%d %s %lld %.2lf %s\n\n",
             r.id,
 	        r.userId,
 	        r.name,
@@ -123,6 +123,51 @@ invalid:
     }
 }
 
+// CountryCode maps a country name to its international dial code.
+struct CountryCode {
+    char country[50];
+    int code;
+};
+
+// countryCodes is a lookup table of country names and their international dial codes.
+struct CountryCode countryCodes[] = {
+    {"Afghanistan", 93},  {"Albania", 355},    {"Algeria", 213},
+    {"Argentina", 54},   {"Australia", 61},   {"Austria", 43},
+    {"Belgium", 32},     {"Brazil", 55},      {"Canada", 1},
+    {"China", 86},       {"Croatia", 385},    {"Cyprus", 357},
+    {"Czech", 420},      {"Denmark", 45},     {"Egypt", 20},
+    {"Finland", 358},    {"France", 33},      {"Germany", 49},
+    {"Greece", 30},      {"Hungary", 36},     {"India", 91},
+    {"Indonesia", 62},   {"Iran", 98},        {"Iraq", 964},
+    {"Ireland", 353},    {"Israel", 972},     {"Italy", 39},
+    {"Japan", 81},       {"Jordan", 962},     {"Kenya", 254},
+    {"Kuwait", 965},     {"Lebanon", 961},    {"Malaysia", 60},
+    {"Mexico", 52},      {"Morocco", 212},    {"Netherlands", 31},
+    {"Nigeria", 234},    {"Norway", 47},      {"Pakistan", 92},
+    {"Philippines", 63}, {"Poland", 48},      {"Portugal", 351},
+    {"Romania", 40},     {"Russia", 7},       {"SaudiArabia", 966},
+    {"Serbia", 381},     {"Singapore", 65},   {"Slovakia", 421},
+    {"Slovenia", 386},   {"SouthAfrica", 27}, {"SouthKorea", 82},
+    {"Spain", 34},       {"Sweden", 46},      {"Switzerland", 41},
+    {"Syria", 963},      {"Thailand", 66},    {"Tunisia", 216},
+    {"Turkey", 90},      {"UAE", 971},        {"UK", 44},
+    {"Ukraine", 380},    {"USA", 1},          {"Vietnam", 84},
+    {"Yemen", 967},
+};
+
+// getCountryCode looks up the international dial code for a given country name.
+// Returns the dial code as an int, or -1 if the country is not found.
+int getCountryCode(char *country)
+{
+    int size = sizeof(countryCodes) / sizeof(countryCodes[0]);
+    for (int i = 0; i < size; i++)
+    {
+        if (strcasecmp(countryCodes[i].country, country) == 0)
+            return countryCodes[i].code;
+    }
+    return -1;
+}
+
 // createNewAcc prompts the user to input details for a new bank account and appends it to the records file.
 // It prevents duplicate account numbers for the same user and initializes the account balance.
 void createNewAcc(struct User u)
@@ -145,13 +190,15 @@ noAccount:
         r.deposit.day   != today->tm_mday       ||
         r.deposit.year  != (today->tm_year + 1900))
     {     printf("%s✖ Please enter today's date only!%s\n", COLOR_RED, COLOR_RESET);
-    goto noAccount;
+          sleep(3);
+          goto noAccount;
     
     }else
     {
     printf("\nEnter the account number:");
     scanf("%d", &r.accountNbr);
 
+    rewind(pf); // Reset file pointer to beginning before reading for account number
     while (getAccountFromFile(pf, userName, &cr))
     {
         if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr)
@@ -163,8 +210,16 @@ noAccount:
     }
     printf("\nEnter the country:");
     scanf("%s", r.country);
-    printf("\nEnter the phone number:");
-    scanf("%d", &r.phone);
+    int code = getCountryCode(r.country);
+    if (code == -1)
+    {
+        printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, r.country, COLOR_RESET);
+        sleep(2);
+        goto noAccount;
+    }
+    printf("\n%sCountry code: +%d%s", COLOR_GREEN, code, COLOR_RESET);
+    printf("\nEnter phone number (with country code e.g. %d...): ", code);
+    scanf("%lld", &r.phone);
     printf("\nEnter amount to deposit: $");
     scanf("%lf", &r.amount);
     printf("\nChoose the type of account:\n\t-> saving\n\t-> current\n\t-> fixed01(for 1 year)\n\t-> fixed02(for 2 years)\n\t-> fixed03(for 3 years)\n\n\tEnter your choice:");
@@ -195,7 +250,7 @@ void checkAllAccounts(struct User u)
         if (strcmp(userName, u.name) == 0)
         {
             printf("_____________________\n");
-            printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:%d \nAmount deposited: $%.2f \nType Of Account:%s\n",
+            printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:+%lld \nAmount deposited: $%.2f \nType Of Account:%s\n",
                    r.accountNbr,
                    r.deposit.month,
                    r.deposit.day,
@@ -210,27 +265,44 @@ void checkAllAccounts(struct User u)
     success(u);
 }
 
-// checkAcc prompts the user for an account number and displays its details if it belongs to them.
-// It also calculates and displays the expected monthly interest yield based on the specific account type.
+// checkAcc first lists all accounts belonging to the user, then prompts for an account number.
+// It displays the full details and calculates the expected interest yield based on the account type.
 void checkAcc(struct User u)
 {
-    int accNbr;
-    printf("\nEnter the account number:");
-    scanf("%d", &accNbr);
-
     char userName[100];
     struct Record r;
     int found = 0;
     double interest;
 
-
     FILE *pf = fopen(RECORDS, "r");
+
+    // First, list all accounts belonging to the user
+    system("clear");
+    printf("\t\t====== Your accounts =====\n\n");
+    while (getAccountFromFile(pf, userName, &r))
+    {
+        if (strcmp(userName, u.name) == 0)
+        {
+            printf("_____________________\n");
+            printf("\nAccount number: %d | Type: %s | Balance: $%.2f\n",
+                   r.accountNbr, r.accountType, r.amount);
+        }
+    }
+
+    // Then ask the user to pick one
+    int accNbr;
+    printf("\n_____________________\n");
+    printf("Enter the account number to see full details and interest: ");
+    scanf("%d", &accNbr);
+
+    // Rewind and find the chosen account
+    rewind(pf);
     while (getAccountFromFile(pf, userName, &r))
     {
         if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
-        {   
+        {
             printf("_____________________\n");
-            printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:%d \nAmount deposited: $%.2f \nType Of Account:%s\n",
+            printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:+%lld \nAmount deposited: $%.2f \nType Of Account:%s\n",
                    r.accountNbr,
                    r.deposit.month,
                    r.deposit.day,
@@ -240,37 +312,35 @@ void checkAcc(struct User u)
                    r.amount,
                    r.accountType);
             found = 1;
-    
-    // Calculate and display monthly interest based on the account type
-            if (strcmp(r.accountType, "savings") == 0) 
-            {   
-            interest= (r.amount * 0.07) / 12;
-                printf("_____________________\n");
-                printf("You will get $%.2f as interest on day %d of every month\n",interest, r.deposit.day);
 
+            // Calculate and display monthly interest based on the account type
+            if (strcmp(r.accountType, "savings") == 0)
+            {
+                interest = (r.amount * 0.07) / 12;
+                printf("_____________________\n");
+                printf("You will get $%.2f as interest on day %d of every month\n", interest, r.deposit.day);
             }
-            else if (strcmp(r.accountType, "fixed01") == 0) 
-            {   
-                interest= r.amount * 0.04;
+            else if (strcmp(r.accountType, "fixed01") == 0)
+            {
+                interest = r.amount * 0.04;
                 printf("_____________________\n");
-            printf("You will get $%.2f as interest on %d/%d/%d\n",interest, r.deposit.month, r.deposit.day, r.deposit.year + 1);
-
+                printf("You will get $%.2f as interest on %d/%d/%d\n", interest, r.deposit.month, r.deposit.day, r.deposit.year + 1);
             }
             else if (strcmp(r.accountType, "fixed02") == 0)
             {
-                interest= r.amount * 0.05;
-                printf("_____________________\n");  
-            printf("You will get $%.2f as interest on %d/%d/%d\n",interest, r.deposit.month, r.deposit.day, r.deposit.year + 2);
+                interest = r.amount * 0.05;
+                printf("_____________________\n");
+                printf("You will get $%.2f as interest on %d/%d/%d\n", interest, r.deposit.month, r.deposit.day, r.deposit.year + 2);
             }
             else if (strcmp(r.accountType, "fixed03") == 0)
             {
-                interest= r.amount * 0.08;
-                printf("_____________________\n");  
-            printf("You will get $%.2f as interest on %d/%d/%d\n",interest, r.deposit.month, r.deposit.day, r.deposit.year + 3);
+                interest = r.amount * 0.08;
+                printf("_____________________\n");
+                printf("You will get $%.2f as interest on %d/%d/%d\n", interest, r.deposit.month, r.deposit.day, r.deposit.year + 3);
             }
             else if (strcmp(r.accountType, "current") == 0)
             {
-                printf("_____________________\n");  
+                printf("_____________________\n");
                 printf("You will not get interests because the account is of type current\n");
             }
         }
@@ -279,7 +349,6 @@ void checkAcc(struct User u)
     if (!found)
         stayOrReturn(0, checkAcc, u);
     success(u);
-
 }
 
 // makeTransaction handles depositing and withdrawing funds for a given account.
