@@ -431,10 +431,36 @@ void checkAcc(struct User u)
     success(u);
 }
 
+// userHasAccounts checks if the logged-in user has any accounts in the records file.
+// Returns 1 if at least one account is found, 0 otherwise.
+int userHasAccounts(struct User u)
+{
+    FILE *pf = fopen(RECORDS, "r");
+    char userName[100];
+    struct Record r;
+    while (getAccountFromFile(pf, userName, &r))
+    {
+        if (strcmp(userName, u.name) == 0)
+        {
+            fclose(pf);
+            return 1;
+        }
+    }
+    fclose(pf);
+    return 0;
+}
+
 // makeTransaction handles depositing and withdrawing funds for a given account.
 // It validates that the account is not a fixed-term deposit (which rejects transactions) and prevents overdrafts.
 void makeTransaction(struct User u)
 {
+    if (!userHasAccounts(u))
+    {
+        system("clear");
+        printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
+        stayOrReturn(1, makeTransaction, u);
+        return;
+    }
     int accNbr;
     printf("\nEnter the account number:");
     scanf("%d", &accNbr);
@@ -530,16 +556,16 @@ void makeTransaction(struct User u)
 void updateAcc(struct User u)
 {
 
+    if (!userHasAccounts(u))
+    {
+        system("clear");
+        printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
+        stayOrReturn(1, updateAcc, u);
+        return;
+    }
     int accNbr;
     printf("\nEnter the account number:");
     scanf("%d", &accNbr);
-
-    char userName[100];
-    struct Record r;
-    int found = 0;
-
-    FILE *pf= fopen(RECORDS, "r");
-    FILE *temp = fopen("temp.txt", "w");
     while (getAccountFromFile(pf, userName, &r))
     {
         if(strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
@@ -588,16 +614,16 @@ void updateAcc(struct User u)
 // It accomplishes this by copying every other account to a temporary file, skipping the target account, and then replacing the original file.
 void removeAcc(struct User u)
 {
+    if (!userHasAccounts(u))
+    {
+        system("clear");
+        printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
+        stayOrReturn(1, removeAcc, u);
+        return;
+    }
     int accNbr;
     printf("\nEnter the account number:");
     scanf("%d", &accNbr);
-
-    char userName[100];
-    struct Record r;
-    int found = 0;
-
-    FILE *pf = fopen(RECORDS, "r");
-    FILE *temp = fopen("temp.txt", "w");
     while (getAccountFromFile(pf, userName, &r))
     {
         if (strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
@@ -624,6 +650,13 @@ void removeAcc(struct User u)
 // It verifies the target user's existence in the system and updates both the account name and user ID securely.
 void transferOwner(struct User u)
 {
+    if (!userHasAccounts(u))
+    {
+        system("clear");
+        printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
+        stayOrReturn(1, transferOwner, u);
+        return;
+    }
     int accNbr;
     printf("\nEnter the account number:");
     scanf("%d", &accNbr);
