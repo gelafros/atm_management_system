@@ -277,7 +277,7 @@ noAccount:
         }
         switch (typeChoice)
         {
-            case 1: strcpy(r.accountType, "saving");  break;
+            case 1: strcpy(r.accountType, "savings");  break;
             case 2: strcpy(r.accountType, "current"); break;
             case 3: strcpy(r.accountType, "fixed01"); break;
             case 4: strcpy(r.accountType, "fixed02"); break;
@@ -427,7 +427,10 @@ void checkAcc(struct User u)
     }
     fclose(pf);
     if (!found)
+    {
         stayOrReturn(0, checkAcc, u);
+        return;
+    }
     success(u);
 }
 
@@ -546,7 +549,10 @@ void makeTransaction(struct User u)
     remove(RECORDS);
     rename("temp.txt", RECORDS);
     if (!found)
+    {
         stayOrReturn(0, makeTransaction, u);
+        return;
+    }
     success(u);
 }    
 
@@ -590,7 +596,7 @@ void updateAcc(struct User u)
                 {
                     printf("_____________________\n");
                     printf("\nEnter the new phone number:");
-                    scanf("%d", &r.phone);
+                    scanf("%lld", &r.phone);
                 saveAccountToFile(temp, r);
                 }
                 else if (found == 2)
@@ -612,9 +618,11 @@ void updateAcc(struct User u)
     remove(RECORDS);
     rename("temp.txt", RECORDS);
     if (!found)
+    {
         stayOrReturn(0, updateAcc, u);
-        success(u);
-
+        return;
+    }
+    success(u);
 }
 
 // removeAcc deletes a specific account from the system.
@@ -656,7 +664,10 @@ void removeAcc(struct User u)
     remove(RECORDS);
     rename("temp.txt", RECORDS);
     if (!found)
+    {
         stayOrReturn(0, removeAcc, u);
+        return;
+    }
     success(u);
 }    
 
@@ -719,9 +730,12 @@ void transferOwner(struct User u)
     remove(RECORDS);
     rename("temp.txt", RECORDS);
     if (!found)
+    {
         stayOrReturn(0, transferOwner, u);
-    success(u);
+        return;
     }
+    success(u);
+}
 
 
 
