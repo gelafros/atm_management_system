@@ -103,9 +103,40 @@ void initMenu(struct User *u)
         case 2:
             // student TODO : add your **Registration** function
             // here
-            printf("\n\n\t\"Type in a new Username: ");
-            scanf("%s", u->name);
-            while (getchar() != '\n'); // Clear the newline left in the buffer
+            while (1)
+            {
+                printf("\n\n\t\"Type in a new Username: ");
+                scanf("%s", u->name);
+                while (getchar() != '\n'); // Clear the newline left in the buffer
+
+                FILE *file = fopen("./data/users.txt", "r");
+                int nameExists = 0;
+                if (file != NULL)
+                {
+                    int checkId;
+                    char checkName[100];
+                    char checkPass[100];
+                    while (fscanf(file, "%d %s %s", &checkId, checkName, checkPass) != EOF)
+                    {
+                        if (strcmp(checkName, u->name) == 0)
+                        {
+                            nameExists = 1;
+                            break;
+                        }
+                    }
+                    fclose(file);
+                }
+
+                if (nameExists)
+                {
+                    printf("%s\n✖ Registration failed! A user with this name already exists. Please try another username.%s\n", COLOR_RED, COLOR_RESET);
+                }
+                else
+                {
+                    break; // Username is unique
+                }
+            }
+
             printf("\n\t\"Type in a new Password: ");
             getMaskedPassword(u->password);
             
@@ -118,28 +149,28 @@ void initMenu(struct User *u)
             }
             
             FILE *file = fopen("./data/users.txt", "a+");
+            if (file == NULL)
+            {
+                printf("Error opening file!");
+                exit(1);
+            }
                 
-                // Scan the existing users to ensure uniqueness and find the highest ID
-                int lastID=-1;
-                char checkName[100];
-                char checkPass[100];
-                int checkId;
-                while((fscanf(file, "%d %s %s", &checkId, checkName, checkPass) != EOF))
-                {
-                    if(strcmp(checkName, u->name) == 0)
-                    {
-                        printf("%s\n✖ Registration failed! A user with this name already exists.%s\n", COLOR_RED, COLOR_RESET);
-                        exit(1);
-                    }else{   
-                    lastID = checkId;
-                    }
-                }
-                
-                // Auto-increment the new user's ID based on the last found ID
-                u->id = lastID + 1;
+            // Scan the existing users to find the highest ID
+            int lastID = -1;
+            char checkName[100];
+            char checkPass[100];
+            int checkId;
+            rewind(file);
+            while ((fscanf(file, "%d %s %s", &checkId, checkName, checkPass) != EOF))
+            {
+                lastID = checkId;
+            }
+            
+            // Auto-increment the new user's ID based on the last found ID
+            u->id = lastID + 1;
                 
             // Append the fully formed user record to the file
-            fprintf(file, "%d %s %s\n",u->id, u->name, u->password);
+            fprintf(file, "%d %s %s\n", u->id, u->name, u->password);
             fclose(file);
 
             r = 1;
