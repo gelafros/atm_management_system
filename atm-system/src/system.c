@@ -192,19 +192,20 @@ noAccount:
     {     printf("%s✖ Please enter today's date only!%s\n", COLOR_RED, COLOR_RESET);
           sleep(3);
           goto noAccount;
-    
-    }else
-    {
+    }
+
+enterAccountNbr:
     printf("\nEnter the account number:");
     scanf("%d", &r.accountNbr);
 
+    lastId = -1;
     rewind(pf); // Reset file pointer to beginning before reading for account number
     while (getAccountFromFile(pf, userName, &cr))
     {
         if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr)
         {
             printf("%s✖ This account number is already in use by this user. Please try a different one.%s\n\n", COLOR_RED, COLOR_RESET);
-            goto noAccount;
+            goto enterAccountNbr;
         }
         lastId = cr.id;
     }
@@ -295,7 +296,6 @@ noAccount:
 
     fclose(pf);
     success(u);
-    }  
 }
 
 // checkAllAccounts retrieves and displays a formatted list of all bank accounts associated with the logged-in user.
