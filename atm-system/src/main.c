@@ -5,64 +5,58 @@
 void mainMenu(struct User u)
 {
     int option;
-    system("clear");
-    printf("\n\n\t\t======= ATM =======\n\n");
-    printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
-    printf("\n\t\t[1]- Create a new account\n");
-    printf("\n\t\t[2]- Update account information\n");
-    printf("\n\t\t[3]- Check accounts\n");
-    printf("\n\t\t[4]- Check list of owned account\n");
-    printf("\n\t\t[5]- Make Transaction\n");
-    printf("\n\t\t[6]- Remove existing account\n");
-    printf("\n\t\t[7]- Transfer ownership\n");
-    printf("\n\t\t[8]- Exit\n");
-    
-    if (scanf("%d", &option) != 1) {
-        while (getchar() != '\n'); // Clear the input buffer
-        option = -1; // Set to invalid option
-    }
-
-    switch (option)
+    while (1)
     {
-    case 1:
-        createNewAcc(u);
-        break;
-    case 2:
-        // student TODO : add your **Update account information** function
-        // here
-        updateAcc(u);
-        break;
-    case 3:
-        // student TODO : add your **Check the details of existing accounts** function
-        // here
-        checkAcc(u);
-        break;
-    case 4:
-        checkAllAccounts(u);
-        break;
-    case 5:
-        // student TODO : add your **Make transaction** function
-        // here
-        makeTransaction(u);
-        break;
-    case 6:
-        // student TODO : add your **Remove existing account** function
-        // here
-        removeAcc(u);
-        break;
-    case 7:
-        // student TODO : add your **Transfer owner** function
-        // here
-        transferOwner(u);
-        break;
-    case 8:
-        exit(1);
-        break;
-    default:
-        printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
-        mainMenu(u); // Prompt again instead of closing the program
+        system("clear");
+        printf("\n\n\t\t======= ATM =======\n\n");
+        printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
+        printf("\n\t\t[1]- Create a new account\n");
+        printf("\n\t\t[2]- Update account information\n");
+        printf("\n\t\t[3]- Check accounts\n");
+        printf("\n\t\t[4]- Check list of owned account\n");
+        printf("\n\t\t[5]- Make Transaction\n");
+        printf("\n\t\t[6]- Remove existing account\n");
+        printf("\n\t\t[7]- Transfer ownership\n");
+        printf("\n\t\t[8]- Exit\n");
+        
+        if (scanf("%d", &option) != 1) {
+            while (getchar() != '\n'); // Clear the input buffer
+            option = -1; // Set to invalid option
+        }
+
+        switch (option)
+        {
+        case 1:
+            createNewAcc(u);
+            break;
+        case 2:
+            updateAcc(u);
+            break;
+        case 3:
+            checkAcc(u);
+            break;
+        case 4:
+            checkAllAccounts(u);
+            break;
+        case 5:
+            makeTransaction(u);
+            break;
+        case 6:
+            removeAcc(u);
+            break;
+        case 7:
+            transferOwner(u);
+            break;
+        case 8:
+            exit(0);
+            break;
+        default:
+            printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
+            sleep(2);
+            break;
+        }
     }
-};
+}
 
 // initMenu displays the initial welcome screen, allowing users to log in or register a new account securely.
 // It manages password encryption, ensures usernames are unique during registration, and assigns sequential user IDs.

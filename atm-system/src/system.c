@@ -44,10 +44,13 @@ void saveAccountToFile(FILE *ptr, struct Record r)
 void stayOrReturn(int notGood, void f(struct User u), struct User u)
 {
     int option;
-    if (notGood == 0)
+    if (notGood == 0 || notGood == 3)
     {
         system("clear");
-        printf("%s\n✖ Oops! We couldn't find a record matching that account.%s\n", COLOR_RED, COLOR_RESET);
+        if (notGood == 0)
+            printf("%s\n✖ Oops! We couldn't find a record matching that account.%s\n", COLOR_RED, COLOR_RESET);
+        else
+            printf("%s\n✖ Transfer failed! The recipient user does not exist.%s\n", COLOR_RED, COLOR_RESET);
     invalid:
         printf("\nEnter 0 to try again, 1 to return to main menu and 2 to exit:");
         if (scanf("%d", &option) != 1) {
@@ -61,7 +64,6 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
         }    
         else if (option == 1)
         { 
-            mainMenu(u);
             return;
         }    
         else if (option == 2)
@@ -86,12 +88,11 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
     if (option == 1)
     {
         system("clear");
-        mainMenu(u);
     }
     else
     {
         system("clear");
-        exit(1);
+        exit(0);
     }
 }
 
@@ -99,6 +100,7 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
 // It prevents the terminal from immediately closing or clearing before the user has a chance to read the result.
 void success(struct User u)
 {
+    (void)u;
     int option;
     printf("%s\n✔ Success! The operation was completed successfully.%s\n\n", COLOR_GREEN, COLOR_RESET);
 invalid:
@@ -110,11 +112,11 @@ invalid:
     system("clear");
     if (option == 1)
     {
-        mainMenu(u);
+        return;
     }
     else if (option == 0)
     {
-        exit(1);
+        exit(0);
     }
     else
     {
@@ -185,7 +187,13 @@ noAccount:
     printf("\t\t\t===== New record =====\n");
 
     printf("\nEnter today's date(mm/dd/yyyy):");
-    scanf("%d/%d/%d", &r.deposit.month, &r.deposit.day, &r.deposit.year);
+    if (scanf("%d/%d/%d", &r.deposit.month, &r.deposit.day, &r.deposit.year) != 3)
+    {
+        while (getchar() != '\n');
+        printf("%s✖ Invalid date format! Please use mm/dd/yyyy format.%s\n", COLOR_RED, COLOR_RESET);
+        sleep(3);
+        goto noAccount;
+    }
     if (r.deposit.month != (today->tm_mon + 1) ||
         r.deposit.day   != today->tm_mday       ||
         r.deposit.year  != (today->tm_year + 1900))
@@ -196,7 +204,13 @@ noAccount:
 
 enterAccountNbr:
     printf("\nEnter the account number:");
-    scanf("%d", &r.accountNbr);
+    if (scanf("%d", &r.accountNbr) != 1)
+    {
+        while (getchar() != '\n');
+        printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+        sleep(3);
+        goto enterAccountNbr;
+    }
 
     lastId = -1;
     rewind(pf); // Reset file pointer to beginning before reading for account number
@@ -259,8 +273,16 @@ enterAccountNbr:
             }
         }
     }
-    printf("\nEnter amount to deposit: $");
-    scanf("%lf", &r.amount);
+    while (1)
+    {
+        printf("\nEnter amount to deposit: $");
+        if (scanf("%lf", &r.amount) == 1 && r.amount > 0.0)
+        {
+            break;
+        }
+        while (getchar() != '\n');
+        printf("%s✖ Invalid deposit amount! Must be a positive number.%s\n", COLOR_RED, COLOR_RESET);
+    }
     int typeChoice = 0;
     while (typeChoice < 1 || typeChoice > 5)
     {
@@ -372,8 +394,16 @@ void checkAcc(struct User u)
     // Then ask the user to pick one
     int accNbr;
     printf("\n_____________________\n");
-    printf("Enter the account number to see full details and interest: ");
-    scanf("%d", &accNbr);
+    while (1)
+    {
+        printf("Enter the account number to see full details and interest: ");
+        if (scanf("%d", &accNbr) == 1)
+        {
+            break;
+        }
+        while (getchar() != '\n');
+        printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
 
     // Rewind and find the chosen account
     rewind(pf);
@@ -465,8 +495,16 @@ void makeTransaction(struct User u)
         return;
     }
     int accNbr;
-    printf("\nEnter the account number:");
-    scanf("%d", &accNbr);
+    while (1)
+    {
+        printf("\nEnter the account number:");
+        if (scanf("%d", &accNbr) == 1)
+        {
+            break;
+        }
+        while (getchar() != '\n');
+        printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
 
     char userName[100];
     struct Record r;
@@ -506,8 +544,16 @@ void makeTransaction(struct User u)
             if (DorW == 1)
             {   
                 printf("_____________________\n");
-                printf("\nEnter amount to deposit: $");
-                scanf("%lf", &deposit);
+                while (1)
+                {
+                    printf("\nEnter amount to deposit: $");
+                    if (scanf("%lf", &deposit) == 1 && deposit > 0.0)
+                    {
+                        break;
+                    }
+                    while (getchar() != '\n');
+                    printf("%s✖ Invalid amount! Must be a positive number.%s\n", COLOR_RED, COLOR_RESET);
+                }
                 r.amount += deposit;
                 printf("_____________________\n");
                 printf("New balance: $%.2f\n", r.amount);
@@ -516,8 +562,16 @@ void makeTransaction(struct User u)
             if (DorW == 2)
             {   
                 printf("_____________________\n");
-                printf("\nEnter amount to withdraw: $");
-                scanf("%lf", &withdraw);
+                while (1)
+                {
+                    printf("\nEnter amount to withdraw: $");
+                    if (scanf("%lf", &withdraw) == 1 && withdraw > 0.0)
+                    {
+                        break;
+                    }
+                    while (getchar() != '\n');
+                    printf("%s✖ Invalid amount! Must be a positive number.%s\n", COLOR_RED, COLOR_RESET);
+                }
                 if (r.amount >= withdraw)
                 {
                     r.amount -= withdraw;
@@ -570,8 +624,16 @@ void updateAcc(struct User u)
         return;
     }
     int accNbr;
-    printf("\nEnter the account number:");
-    scanf("%d", &accNbr);
+    while (1)
+    {
+        printf("\nEnter the account number:");
+        if (scanf("%d", &accNbr) == 1)
+        {
+            break;
+        }
+        while (getchar() != '\n');
+        printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
 
     char userName[100];
     struct Record r;
@@ -595,9 +657,17 @@ void updateAcc(struct User u)
                 if (found == 1)
                 {
                     printf("_____________________\n");
-                    printf("\nEnter the new phone number:");
-                    scanf("%lld", &r.phone);
-                saveAccountToFile(temp, r);
+                    while (1)
+                    {
+                        printf("\nEnter the new phone number:");
+                        if (scanf("%lld", &r.phone) == 1)
+                        {
+                            break;
+                        }
+                        while (getchar() != '\n');
+                        printf("%s✖ Invalid phone number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+                    }
+                    saveAccountToFile(temp, r);
                 }
                 else if (found == 2)
                 {
@@ -637,8 +707,16 @@ void removeAcc(struct User u)
         return;
     }
     int accNbr;
-    printf("\nEnter the account number:");
-    scanf("%d", &accNbr);
+    while (1)
+    {
+        printf("\nEnter the account number:");
+        if (scanf("%d", &accNbr) == 1)
+        {
+            break;
+        }
+        while (getchar() != '\n');
+        printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
 
     char userName[100];
     struct Record r;
@@ -683,17 +761,25 @@ void transferOwner(struct User u)
         return;
     }
     int accNbr;
-    printf("\nEnter the account number:");
-    scanf("%d", &accNbr);
+    while (1)
+    {
+        printf("\nEnter the account number:");
+        if (scanf("%d", &accNbr) == 1)
+        {
+            break;
+        }
+        while (getchar() != '\n');
+        printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
 
     char userName[100];
     char newUserName[100];
     struct Record r;
-    int found = 0;
+    int accountFound = 0;
+    int recipientFound = 0;
     int checkId;
     char checkName[100];
     char checkPass[100];
-   
 
     FILE *pf= fopen(RECORDS, "r");
     FILE *temp = fopen("temp.txt", "w");
@@ -701,22 +787,26 @@ void transferOwner(struct User u)
     {
         if(strcmp(userName, u.name) == 0 && (r.accountNbr == accNbr))
         {
+            accountFound = 1;
             printf("_____________________\n");
             printf("\nEnter the new owner name:");
             scanf("%s", newUserName);
             
            // Verify the target user exists and fetch their ID before transferring ownership
-           FILE *pf2 =fopen("./data/users.txt", "r");
-           while(fscanf(pf2, "%d %s %s", &checkId, checkName, checkPass) != EOF)
+           FILE *pf2 = fopen("./data/users.txt", "r");
+           if (pf2 != NULL)
            {
-               if(strcmp(checkName, newUserName) == 0)
+               while(fscanf(pf2, "%d %s %s", &checkId, checkName, checkPass) != EOF)
                {
-                   strcpy(r.name, newUserName);
-                   r.userId = checkId;
-                   found = 1;
-               }   
+                   if(strcmp(checkName, newUserName) == 0)
+                   {
+                       strcpy(r.name, newUserName);
+                       r.userId = checkId;
+                       recipientFound = 1;
+                   }   
+               }
+               fclose(pf2);
            }
-           fclose(pf2);
            saveAccountToFile(temp, r);
         } else
         {
@@ -729,9 +819,15 @@ void transferOwner(struct User u)
     // Replace the old records file with the updated temporary file
     remove(RECORDS);
     rename("temp.txt", RECORDS);
-    if (!found)
+
+    if (!accountFound)
     {
         stayOrReturn(0, transferOwner, u);
+        return;
+    }
+    else if (!recipientFound)
+    {
+        stayOrReturn(3, transferOwner, u);
         return;
     }
     success(u);
