@@ -833,9 +833,16 @@ void updateAcc(struct User u, sqlite3 *db)
         {
             // --- Update country only ---
             char newCountry[100];
+            int code = -1;
             printf("_____________________\n");
-            printf("\nEnter the new country:");
-            scanf("%s", newCountry);
+            while (code == -1)
+            {
+                printf("\nEnter the new country: ");
+                scanf("%s", newCountry);
+                code = getCountryCode(newCountry);
+                if (code == -1)
+                    printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, newCountry, COLOR_RESET);
+            }
 
             // SET only the country column — other fields unchanged
             sqlite3_prepare_v2(db,
