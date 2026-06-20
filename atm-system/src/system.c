@@ -177,10 +177,19 @@ noAccount:
     // --- Deposit date ---
     // The user enters any valid date (audit uses specific past dates like 10/10/2012
     // to verify interest calculations — we accept any date, not just today)
-    printf("\nEnter the deposit date(mm/dd/yyyy):");
-    if (scanf("%d/%d/%d", &r.deposit.month, &r.deposit.day, &r.deposit.year) != 3)
+    printf("\nEnter the deposit date (mm/dd/yyyy) or enter 0 to return to main menu: ");
+    char dateInput[50];
+    if (scanf("%49s", dateInput) != 1)
     {
         while (getchar() != '\n');
+        goto noAccount;
+    }
+    if (strcmp(dateInput, "0") == 0)
+    {
+        return;
+    }
+    if (sscanf(dateInput, "%d/%d/%d", &r.deposit.month, &r.deposit.day, &r.deposit.year) != 3)
+    {
         printf("%s✖ Invalid date format! Please use mm/dd/yyyy format.%s\n", COLOR_RED, COLOR_RESET);
         sleep(3);
         goto noAccount;
@@ -435,11 +444,15 @@ void checkAcc(struct User u, sqlite3 *db)
     printf("\n_____________________\n");
     while (1)
     {
-        printf("Enter the account number to see full details and interest: ");
+        printf("Enter the account number to see full details and interest (or enter -1 to return to main menu): ");
         if (scanf("%d", &accNbr) == 1)
             break;
         while (getchar() != '\n');
         printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
+    if (accNbr == -1)
+    {
+        return;
     }
 
     found = 0; // reset for the second query
@@ -584,11 +597,15 @@ void makeTransaction(struct User u, sqlite3 *db)
     int accNbr;
     while (1)
     {
-        printf("\nEnter the account number:");
+        printf("\nEnter the account number (or enter -1 to return to main menu): ");
         if (scanf("%d", &accNbr) == 1)
             break;
         while (getchar() != '\n');
         printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
+    if (accNbr == -1)
+    {
+        return;
     }
 
     // --- Load the account from the database ---
@@ -718,11 +735,15 @@ void updateAcc(struct User u, sqlite3 *db)
     int accNbr;
     while (1)
     {
-        printf("\nEnter the account number:");
+        printf("\nEnter the account number (or enter -1 to return to main menu): ");
         if (scanf("%d", &accNbr) == 1)
             break;
         while (getchar() != '\n');
         printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
+    if (accNbr == -1)
+    {
+        return;
     }
 
     // --- Verify the account exists for this user ---
@@ -821,11 +842,15 @@ void removeAcc(struct User u, sqlite3 *db)
     int accNbr;
     while (1)
     {
-        printf("\nEnter the account number:");
+        printf("\nEnter the account number (or enter -1 to return to main menu): ");
         if (scanf("%d", &accNbr) == 1)
             break;
         while (getchar() != '\n');
         printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
+    if (accNbr == -1)
+    {
+        return;
     }
 
     // DELETE the row matching this user + account number
@@ -868,11 +893,15 @@ void transferOwner(struct User u, sqlite3 *db)
     int accNbr;
     while (1)
     {
-        printf("\nEnter the account number:");
+        printf("\nEnter the account number (or enter -1 to return to main menu): ");
         if (scanf("%d", &accNbr) == 1)
             break;
         while (getchar() != '\n');
         printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+    }
+    if (accNbr == -1)
+    {
+        return;
     }
 
     // --- Verify the account exists and belongs to this user ---
