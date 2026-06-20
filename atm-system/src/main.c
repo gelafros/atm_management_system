@@ -7,6 +7,27 @@ void mainMenu(struct User u,sqlite3 *db)
     int option;
     while (1)
     {
+        // --- Check for pending transfer notifications ---
+        // When someone transfers an account to this user, a file is written at
+        // data/notifications/<username>.txt — we display it here and delete it
+        // so the user sees it exactly once on their next visit to the main menu.
+        char notifPath[300];
+        sprintf(notifPath, "./data/notifications/%s.txt", u.name);
+
+        FILE *nf = fopen(notifPath, "r");
+        if (nf)
+        {
+            char msg[500];
+            printf("\n%s📬 Notification:%s ", COLOR_GREEN, COLOR_RESET);
+            // Read and print every line of the notification file
+            while (fgets(msg, sizeof(msg), nf))
+                printf("%s", msg);
+            fclose(nf);
+            // Delete the file after displaying — so it only shows once
+            remove(notifPath);
+            sleep(3);
+        }
+
         system("clear");
         printf("\n\n\t\t======= ATM =======\n\n");
         printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
