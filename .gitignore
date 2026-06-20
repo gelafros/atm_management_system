@@ -1,0 +1,8 @@
+# Compiled binary
+atm-system/atm
+
+# Object files
+atm-system/src/*.o
+
+# SQLite database (auto-generated from seed on first run)
+atm-system/data/atm.db
