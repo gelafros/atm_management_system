@@ -188,7 +188,7 @@ noAccount:
 
 enterAccountNbr:
     // --- Account number ---
-    printf("\nEnter the account number:");
+    printf("\nEnter the account number (or press 0 to auto-generate): ");
     if (scanf("%d", &r.accountNbr) != 1)
     {
         while (getchar() != '\n');
@@ -197,22 +197,40 @@ enterAccountNbr:
         goto enterAccountNbr;
     }
 
-    // --- Check for duplicate account number for this user ---
-    // Query: does a record already exist with this user + account number combination?
-    sqlite3_prepare_v2(db,
-        "SELECT id FROM records WHERE name = ? AND account_nbr = ?;",
-        -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name,       -1, SQLITE_STATIC);
-    sqlite3_bind_int (stmt, 2, r.accountNbr);
-
-    if (sqlite3_step(stmt) == SQLITE_ROW)
+    if (r.accountNbr == 0)
     {
-        // A row was found — this account number is already taken by this user
+        // Auto-generate: find max account_nbr in records table globally and add 1
+        sqlite3_prepare_v2(db, "SELECT COALESCE(MAX(account_nbr), 0) + 1 FROM records;", -1, &stmt, NULL);
+        sqlite3_step(stmt);
+        r.accountNbr = sqlite3_column_int(stmt, 0);
         sqlite3_finalize(stmt);
-        printf("%s✖ This account number is already in use by this user. Please try a different one.%s\n\n", COLOR_RED, COLOR_RESET);
+        printf("%s✔ Generated account number: %d%s\n", COLOR_GREEN, r.accountNbr, COLOR_RESET);
+    }
+    else if (r.accountNbr < 0)
+    {
+        printf("%s✖ Account number must be positive!%s\n", COLOR_RED, COLOR_RESET);
+        sleep(2);
         goto enterAccountNbr;
     }
-    sqlite3_finalize(stmt);
+    else
+    {
+        // --- Check for duplicate account number for this user ---
+        // Query: does a record already exist with this user + account number combination?
+        sqlite3_prepare_v2(db,
+            "SELECT id FROM records WHERE name = ? AND account_nbr = ?;",
+            -1, &stmt, NULL);
+        sqlite3_bind_text(stmt, 1, u.name,       -1, SQLITE_STATIC);
+        sqlite3_bind_int (stmt, 2, r.accountNbr);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            // A row was found — this account number is already taken by this user
+            sqlite3_finalize(stmt);
+            printf("%s✖ This account number is already in use by this user. Please try a different one.%s\n\n", COLOR_RED, COLOR_RESET);
+            goto enterAccountNbr;
+        }
+        sqlite3_finalize(stmt);
+    }
 
     // --- Country ---
     int code = -1;
