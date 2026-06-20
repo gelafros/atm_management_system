@@ -29,6 +29,15 @@ static void seedDB(sqlite3 *db)
 
             while (fscanf(fp, "%d %s %s", &id, name, password) == 3)
             {
+                // Encrypt the password using a Caesar cipher (shift by +3) before saving
+                // because users.txt contains plaintext passwords but the application expects encrypted ones.
+                int p_idx = 0;
+                while (password[p_idx] != '\0')
+                {
+                    password[p_idx] = password[p_idx] + 3;
+                    p_idx++;
+                }
+
                 // INSERT each user — use the original id from the file
                 sqlite3_prepare_v2(db,
                     "INSERT OR IGNORE INTO users (id, name, password) VALUES (?, ?, ?);",
