@@ -867,19 +867,18 @@ void transferOwner(struct User u, sqlite3 *db)
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    // --- Write a notification file for the new owner ---
-    // The file lives at data/notifications/<newowner>.txt
-    // mainMenu() checks for this file every time the user enters the menu
-    // and displays it once before deleting it.
-    char notifPath[300];
-    sprintf(notifPath, "./data/notifications/%s.txt", newUserName);
+    // --- Save the transfer notification in SQLite ---
+    sqlite3_prepare_v2(db,
+        "INSERT INTO notifications (recipient_id, message) VALUES (?, ?);",
+        -1, &stmt, NULL);
+    sqlite3_bind_int(stmt, 1, newUserId);
 
-    FILE *nf = fopen(notifPath, "w");
-    if (nf)
-    {
-        fprintf(nf, "Account #%d has been transferred to you by %s.\n", accNbr, u.name);
-        fclose(nf);
-    }
+    char notifMsg[300];
+    sprintf(notifMsg, "Account #%d has been transferred to you by %s.\n", accNbr, u.name);
+    sqlite3_bind_text(stmt, 2, notifMsg, -1, SQLITE_STATIC);
+
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
 
     success(u);
 }

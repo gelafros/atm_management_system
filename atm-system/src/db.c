@@ -133,6 +133,12 @@ sqlite3 *initDB()
         "   phone        INTEGER NOT NULL,"
         "   amount       REAL NOT NULL,"
         "   type         TEXT NOT NULL"
+        ");"
+
+        "CREATE TABLE IF NOT EXISTS notifications ("
+        "   id           INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "   recipient_id INTEGER NOT NULL,"
+        "   message      TEXT NOT NULL"
         ");";
 
     char *err = NULL;

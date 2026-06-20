@@ -7,24 +7,35 @@ void mainMenu(struct User u,sqlite3 *db)
     int option;
     while (1)
     {
-        // --- Check for pending transfer notifications ---
-        // When someone transfers an account to this user, a file is written at
-        // data/notifications/<username>.txt — we display it here and delete it
-        // so the user sees it exactly once on their next visit to the main menu.
-        char notifPath[300];
-        sprintf(notifPath, "./data/notifications/%s.txt", u.name);
+        // --- Check for pending transfer notifications in SQLite ---
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(db,
+            "SELECT id, message FROM notifications WHERE recipient_id = ?;",
+            -1, &stmt, NULL);
+        sqlite3_bind_int(stmt, 1, u.id);
 
-        FILE *nf = fopen(notifPath, "r");
-        if (nf)
+        int hasNotif = 0;
+        while (sqlite3_step(stmt) == SQLITE_ROW)
         {
-            char msg[500];
-            printf("\n%s📬 Notification:%s ", COLOR_GREEN, COLOR_RESET);
-            // Read and print every line of the notification file
-            while (fgets(msg, sizeof(msg), nf))
-                printf("%s", msg);
-            fclose(nf);
-            // Delete the file after displaying — so it only shows once
-            remove(notifPath);
+            if (!hasNotif)
+            {
+                printf("\n%s📬 Notification:%s\n", COLOR_GREEN, COLOR_RESET);
+                hasNotif = 1;
+            }
+            const char *msg = (const char *)sqlite3_column_text(stmt, 1);
+            printf("  - %s", msg);
+        }
+        sqlite3_finalize(stmt);
+
+        if (hasNotif)
+        {
+            // Delete all read notifications for this user
+            sqlite3_prepare_v2(db,
+                "DELETE FROM notifications WHERE recipient_id = ?;",
+                -1, &stmt, NULL);
+            sqlite3_bind_int(stmt, 1, u.id);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
             sleep(3);
         }
 
