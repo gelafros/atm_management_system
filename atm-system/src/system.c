@@ -163,6 +163,48 @@ int getCountryCode(char *country)
     return -1;
 }
 
+// getPhoneCountryCode checks if the given phone string starts with any valid country code.
+// Returns the matched dial code, or -1 if no match is found.
+int getPhoneCountryCode(const char *phoneStr)
+{
+    int size = sizeof(countryCodes) / sizeof(countryCodes[0]);
+    for (int i = 0; i < size; i++)
+    {
+        char codeStr[10];
+        sprintf(codeStr, "%d", countryCodes[i].code);
+        if (strncmp(phoneStr, codeStr, strlen(codeStr)) == 0)
+            return countryCodes[i].code;
+    }
+    return -1;
+}
+
+// validatePhoneNumber validates that the phone number contains digits only,
+// is between 8 and 15 digits, and starts with a valid country code.
+int validatePhoneNumber(const char *phoneStr)
+{
+    int len = strlen(phoneStr);
+    for (int i = 0; i < len; i++)
+    {
+        if (phoneStr[i] < '0' || phoneStr[i] > '9')
+        {
+            printf("%s✖ Phone number must contain digits only.%s\n", COLOR_RED, COLOR_RESET);
+            return 0;
+        }
+    }
+    if (len < 8 || len > 15)
+    {
+        printf("%s✖ Phone number must be between 8 and 15 digits.%s\n", COLOR_RED, COLOR_RESET);
+        return 0;
+    }
+    int matchedCode = getPhoneCountryCode(phoneStr);
+    if (matchedCode == -1)
+    {
+        printf("%s✖ Phone number must start with a valid country code.%s\n", COLOR_RED, COLOR_RESET);
+        return 0;
+    }
+    return 1;
+}
+
 // createNewAcc prompts the user to input details for a new bank account and saves it to the database.
 // It prevents duplicate account numbers for the same user and validates all input fields.
 void createNewAcc(struct User u, sqlite3 *db)
@@ -253,7 +295,7 @@ enterAccountNbr:
     }
     printf("\n%sCountry code: +%d%s", COLOR_GREEN, code, COLOR_RESET);
 
-    // --- Phone number (must be digits only, 8-15 chars, start with country code) ---
+    // --- Phone number (must be digits only, 8-15 chars, start with any valid country code) ---
     char phoneStr[20];
     int phoneValid = 0;
     while (!phoneValid)
@@ -262,32 +304,10 @@ enterAccountNbr:
         scanf("%19s", phoneStr);
         while (getchar() != '\n');
 
-        int len = strlen(phoneStr);
-        int digitsOnly = 1;
-        for (int i = 0; i < len; i++)
+        if (validatePhoneNumber(phoneStr))
         {
-            if (phoneStr[i] < '0' || phoneStr[i] > '9')
-            {
-                digitsOnly = 0;
-                break;
-            }
-        }
-
-        if (!digitsOnly)
-            printf("%s✖ Phone number must contain digits only (no spaces or dashes).%s\n", COLOR_RED, COLOR_RESET);
-        else if (len < 8 || len > 15)
-            printf("%s✖ Phone number must be between 8 and 15 digits.%s\n", COLOR_RED, COLOR_RESET);
-        else
-        {
-            char codeStr[10];
-            sprintf(codeStr, "%d", code);
-            if (strncmp(phoneStr, codeStr, strlen(codeStr)) != 0)
-                printf("%s✖ Phone number must start with the country code %d.%s\n", COLOR_RED, code, COLOR_RESET);
-            else
-            {
-                r.phone = atoll(phoneStr);
-                phoneValid = 1;
-            }
+            r.phone = atoll(phoneStr);
+            phoneValid = 1;
         }
     }
 
@@ -778,15 +798,25 @@ void updateAcc(struct User u, sqlite3 *db)
         if (choice == 1)
         {
             // --- Update phone number only ---
-            long long newPhone;
+            char phoneStr[20];
+            int phoneValid = 0;
+            long long newPhone = 0;
             printf("_____________________\n");
-            while (1)
+            while (!phoneValid)
             {
-                printf("\nEnter the new phone number:");
-                if (scanf("%lld", &newPhone) == 1)
-                    break;
+                printf("\nEnter the new phone number (with country code): ");
+                if (scanf("%19s", phoneStr) != 1)
+                {
+                    while (getchar() != '\n');
+                    continue;
+                }
                 while (getchar() != '\n');
-                printf("%s✖ Invalid phone number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+
+                if (validatePhoneNumber(phoneStr))
+                {
+                    newPhone = atoll(phoneStr);
+                    phoneValid = 1;
+                }
             }
 
             // SET only the phone column — other fields unchanged
