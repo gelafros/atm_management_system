@@ -41,7 +41,7 @@ void saveAccountToFile(FILE *ptr, struct Record r)
 
 // stayOrReturn prompts the user to either retry the current operation, return to the main menu, or exit the program.
 // It handles cases where an account is not found (notGood == 0) or simply serves as a navigation prompt.
-void stayOrReturn(int notGood, void f(struct User u), struct User u)
+void stayOrReturn(int notGood, void f(struct User u, sqlite3 *db), struct User u, sqlite3 *db)
 {
     int option;
     if (notGood == 0 || notGood == 3)
@@ -59,7 +59,7 @@ void stayOrReturn(int notGood, void f(struct User u), struct User u)
         }
         if (option == 0)
         {
-            f(u);
+            f(u, db);
             return;
         }    
         else if (option == 1)
@@ -172,7 +172,7 @@ int getCountryCode(char *country)
 
 // createNewAcc prompts the user to input details for a new bank account and appends it to the records file.
 // It prevents duplicate account numbers for the same user and initializes the account balance.
-void createNewAcc(struct User u)
+void createNewAcc(struct User u, sqlite3 *db)
 {
     struct Record r;
     struct Record cr;
@@ -322,7 +322,7 @@ enterAccountNbr:
 
 // checkAllAccounts retrieves and displays a formatted list of all bank accounts associated with the logged-in user.
 // It iterates through the entire records file and filters by the user's name.
-void checkAllAccounts(struct User u)
+void checkAllAccounts(struct User u, sqlite3 *db)
 {
     char userName[100];
     struct Record r;
@@ -352,7 +352,7 @@ void checkAllAccounts(struct User u)
     if (!found)
     {
         printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
-        stayOrReturn(1, checkAllAccounts, u);
+        stayOrReturn(1, checkAllAccounts, u, db);
         return;
     }
     success(u);
@@ -360,7 +360,7 @@ void checkAllAccounts(struct User u)
 
 // checkAcc first lists all accounts belonging to the user, then prompts for an account number.
 // It displays the full details and calculates the expected interest yield based on the account type.
-void checkAcc(struct User u)
+void checkAcc(struct User u, sqlite3 *db)
 {
     char userName[100];
     struct Record r;
@@ -387,7 +387,7 @@ void checkAcc(struct User u)
     {
         printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
         fclose(pf);
-        stayOrReturn(1, checkAcc, u);
+        stayOrReturn(1, checkAcc, u, db);
         return;
     }
 
@@ -458,7 +458,7 @@ void checkAcc(struct User u)
     fclose(pf);
     if (!found)
     {
-        stayOrReturn(0, checkAcc, u);
+        stayOrReturn(0, checkAcc, u, db);
         return;
     }
     success(u);
@@ -466,7 +466,7 @@ void checkAcc(struct User u)
 
 // userHasAccounts checks if the logged-in user has any accounts in the records file.
 // Returns 1 if at least one account is found, 0 otherwise.
-int userHasAccounts(struct User u)
+int userHasAccounts(struct User u, sqlite3 *db)
 {
     FILE *pf = fopen(RECORDS, "r");
     char userName[100];
@@ -485,13 +485,13 @@ int userHasAccounts(struct User u)
 
 // makeTransaction handles depositing and withdrawing funds for a given account.
 // It validates that the account is not a fixed-term deposit (which rejects transactions) and prevents overdrafts.
-void makeTransaction(struct User u)
+void makeTransaction(struct User u, sqlite3 *db)
 {
-    if (!userHasAccounts(u))
+    if (!userHasAccounts(u, db))
     {
         system("clear");
         printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
-        stayOrReturn(1, makeTransaction, u);
+        stayOrReturn(1, makeTransaction, u, db);
         return;
     }
     int accNbr;
@@ -604,7 +604,7 @@ void makeTransaction(struct User u)
     rename("temp.txt", RECORDS);
     if (!found)
     {
-        stayOrReturn(0, makeTransaction, u);
+        stayOrReturn(0, makeTransaction, u, db);
         return;
     }
     success(u);
@@ -613,14 +613,14 @@ void makeTransaction(struct User u)
 
 // updateAcc allows the user to modify the phone number or country associated with a specific account.
 // It rewrites the records file, replacing the old account details with the updated values.
-void updateAcc(struct User u)
+void updateAcc(struct User u, sqlite3 *db)
 {
 
-    if (!userHasAccounts(u))
+    if (!userHasAccounts(u, db))
     {
         system("clear");
         printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
-        stayOrReturn(1, updateAcc, u);
+        stayOrReturn(1, updateAcc, u, db);
         return;
     }
     int accNbr;
@@ -689,7 +689,7 @@ void updateAcc(struct User u)
     rename("temp.txt", RECORDS);
     if (!found)
     {
-        stayOrReturn(0, updateAcc, u);
+        stayOrReturn(0, updateAcc, u, db);
         return;
     }
     success(u);
@@ -697,13 +697,13 @@ void updateAcc(struct User u)
 
 // removeAcc deletes a specific account from the system.
 // It accomplishes this by copying every other account to a temporary file, skipping the target account, and then replacing the original file.
-void removeAcc(struct User u)
+void removeAcc(struct User u, sqlite3 *db)
 {
-    if (!userHasAccounts(u))
+    if (!userHasAccounts(u, db))
     {
         system("clear");
         printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
-        stayOrReturn(1, removeAcc, u);
+        stayOrReturn(1, removeAcc, u, db);
         return;
     }
     int accNbr;
@@ -743,7 +743,7 @@ void removeAcc(struct User u)
     rename("temp.txt", RECORDS);
     if (!found)
     {
-        stayOrReturn(0, removeAcc, u);
+        stayOrReturn(0, removeAcc, u, db);
         return;
     }
     success(u);
@@ -751,13 +751,13 @@ void removeAcc(struct User u)
 
 // transferOwner reassigns the ownership of a given account to another registered user.
 // It verifies the target user's existence in the system and updates both the account name and user ID securely.
-void transferOwner(struct User u)
+void transferOwner(struct User u, sqlite3 *db)
 {
-    if (!userHasAccounts(u))
+    if (!userHasAccounts(u, db))
     {
         system("clear");
         printf("%s\nYou have no accounts yet. Create one from the main menu!%s\n", COLOR_YELLOW, COLOR_RESET);
-        stayOrReturn(1, transferOwner, u);
+        stayOrReturn(1, transferOwner, u, db);
         return;
     }
     int accNbr;
@@ -822,12 +822,12 @@ void transferOwner(struct User u)
 
     if (!accountFound)
     {
-        stayOrReturn(0, transferOwner, u);
+        stayOrReturn(0, transferOwner, u, db);
         return;
     }
     else if (!recipientFound)
     {
-        stayOrReturn(3, transferOwner, u);
+        stayOrReturn(3, transferOwner, u, db);
         return;
     }
     success(u);

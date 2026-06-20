@@ -52,42 +52,54 @@ void loginMenu(char a[50], char pass[50])
     getMaskedPassword(pass);
 }
 
-// getPassword retrieves and decrypts the password for a given user from the users data file.
-// It returns a pointer to a static buffer containing the decrypted password, or an error string if the user is not found.
-const char *getPassword(struct User u)
+// getPassword queries the SQLite database for the stored (encrypted) password
+// of the user whose name matches u.name.
+// It decrypts it using Caesar cipher (shift -3) and returns it as a static string.
+// Returns "no user found" if the username does not exist in the database.
+const char *getPassword(struct User u, sqlite3 *db)
 {
-    FILE *fp;
-    struct User userChecker;
+    // stmt will hold our prepared SQL query
+    sqlite3_stmt *stmt;
 
-    if ((fp = fopen("./data/users.txt", "r")) == NULL)
-    {
-        printf("Error! opening file");
-        exit(1);
-    }
+    // static buffer to hold the decrypted password across the function return
+    // (must be static so it stays alive after the function returns)
+    static char decrypted[50];
 
-    // Fix: fscanf must read the ID first before the name and password!
-    while (fscanf(fp, "%d %s %s", &userChecker.id, userChecker.name, userChecker.password) != EOF)
+    // Step 1: Prepare the SQL query with a ? placeholder for the username.
+    // This is safer than building the string directly (prevents SQL injection).
+    sqlite3_prepare_v2(db,
+        "SELECT password FROM users WHERE name = ?;",
+        -1, &stmt, NULL);
+
+    // Step 2: Fill in the ? placeholder with the actual username we are looking for
+    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+
+    // Step 3: Execute the query.
+    // SQLITE_ROW means a matching row was found in the database.
+    if (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        if (strcmp(userChecker.name, u.name) == 0)
+        // Step 4: Read column 0 (the password column) from the result row
+        const char *pass = (const char *)sqlite3_column_text(stmt, 0);
+
+        // Copy into our static buffer so we can safely return it
+        strcpy(decrypted, pass);
+
+        // Step 5: Clean up the statement — always required after use
+        sqlite3_finalize(stmt);
+
+        // Decrypt the password by shifting each character back by -3
+        // (reverses the Caesar cipher +3 encryption applied during registration)
+        int i = 0;
+        while (decrypted[i] != '\0')
         {
-            fclose(fp);
-            
-            // Use a static buffer to safely return the decrypted password
-            static char decrypted[50];
-            strcpy(decrypted, userChecker.password);
-            
-            // Decrypt the password (shift back by -3)
-            int i = 0;
-            while (decrypted[i] != '\0')
-            {
-                decrypted[i] = decrypted[i] - 3;
-                i++;
-            }
-            
-            return decrypted;
+            decrypted[i] = decrypted[i] - 3;
+            i++;
         }
+
+        return decrypted;
     }
 
-    fclose(fp);
+    // No matching user was found — clean up and return sentinel value
+    sqlite3_finalize(stmt);
     return "no user found";
 }

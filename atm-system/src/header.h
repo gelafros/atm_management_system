@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sqlite3.h>
 
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
@@ -40,15 +41,18 @@ struct User
 // authentication functions
 void loginMenu(char a[50], char pass[50]);
 void registerMenu(char a[50], char pass[50]);
-const char *getPassword(struct User u);
+const char *getPassword(struct User u, sqlite3 *db);
 void getMaskedPassword(char *password);
 
 // system function
-void createNewAcc(struct User u);
-void mainMenu(struct User u);
-void checkAllAccounts(struct User u);
-void checkAcc(struct User u);
-void makeTransaction(struct User u);
-void updateAcc(struct User u);
-void removeAcc(struct User u);
-void transferOwner(struct User u);
+void createNewAcc(struct User u, sqlite3 *db);
+void mainMenu(struct User u, sqlite3 *db);
+void checkAllAccounts(struct User u, sqlite3 *db);
+void checkAcc(struct User u, sqlite3 *db);
+void makeTransaction(struct User u, sqlite3 *db);
+void updateAcc(struct User u, sqlite3 *db);
+void removeAcc(struct User u, sqlite3 *db);
+void transferOwner(struct User u, sqlite3 *db);
+
+// database functions
+sqlite3 *initDB();
