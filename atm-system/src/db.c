@@ -1,5 +1,107 @@
 #include "header.h"
 
+// seedDB imports existing data from the legacy .txt files into the SQLite database.
+// It only runs if the tables are empty — so it is safe to call on every startup
+// without risking duplicate entries on subsequent runs.
+static void seedDB(sqlite3 *db)
+{
+    sqlite3_stmt *stmt;
+    char *err = NULL;
+
+    // ── Seed users ────────────────────────────────────────────────────────────
+    // Check if the users table already has rows
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM users;", -1, &stmt, NULL);
+    sqlite3_step(stmt);
+    int userCount = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+
+    if (userCount == 0)
+    {
+        // Table is empty — read users.txt and insert each user
+        FILE *fp = fopen("./data/users.txt", "r");
+        if (fp != NULL)
+        {
+            int id;
+            char name[50], password[50];
+
+            // Begin a transaction so all inserts commit atomically (faster + safer)
+            sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+
+            while (fscanf(fp, "%d %s %s", &id, name, password) == 3)
+            {
+                // INSERT each user — use the original id from the file
+                sqlite3_prepare_v2(db,
+                    "INSERT OR IGNORE INTO users (id, name, password) VALUES (?, ?, ?);",
+                    -1, &stmt, NULL);
+                sqlite3_bind_int (stmt, 1, id);
+                sqlite3_bind_text(stmt, 2, name,     -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 3, password, -1, SQLITE_STATIC);
+                sqlite3_step(stmt);
+                sqlite3_finalize(stmt);
+            }
+
+            sqlite3_exec(db, "COMMIT;", NULL, NULL, &err);
+            fclose(fp);
+            printf("%s✔ Seeded users from users.txt into database.%s\n", COLOR_GREEN, COLOR_RESET);
+        }
+    }
+
+    // ── Seed records ──────────────────────────────────────────────────────────
+    // Check if the records table already has rows
+    sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM records;", -1, &stmt, NULL);
+    sqlite3_step(stmt);
+    int recCount = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+
+    if (recCount == 0)
+    {
+        // Table is empty — read records.txt and insert each record
+        FILE *fp = fopen("./data/records.txt", "r");
+        if (fp != NULL)
+        {
+            int id, userId, accountNbr, month, day, year;
+            char name[100], country[100], accountType[10];
+            long long phone;
+            double amount;
+
+            sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+
+            // Parse the same format used by the old getAccountFromFile:
+            // id user_id name account_nbr MM/DD/YYYY country phone amount type
+            while (fscanf(fp, "%d %d %s %d %d/%d/%d %s %lld %lf %s",
+                          &id, &userId, name, &accountNbr,
+                          &month, &day, &year,
+                          country, &phone, &amount, accountType) == 11)
+            {
+                // Format the date back into a "MM/DD/YYYY" text string for the DB
+                char dateStr[20];
+                sprintf(dateStr, "%d/%d/%d", month, day, year);
+
+                sqlite3_prepare_v2(db,
+                    "INSERT OR IGNORE INTO records "
+                    "(id, user_id, name, account_nbr, deposit_date, country, phone, amount, type) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                    -1, &stmt, NULL);
+                sqlite3_bind_int   (stmt, 1, id);
+                sqlite3_bind_int   (stmt, 2, userId);
+                sqlite3_bind_text  (stmt, 3, name,        -1, SQLITE_STATIC);
+                sqlite3_bind_int   (stmt, 4, accountNbr);
+                sqlite3_bind_text  (stmt, 5, dateStr,     -1, SQLITE_STATIC);
+                sqlite3_bind_text  (stmt, 6, country,     -1, SQLITE_STATIC);
+                sqlite3_bind_int64 (stmt, 7, phone);
+                sqlite3_bind_double(stmt, 8, amount);
+                sqlite3_bind_text  (stmt, 9, accountType, -1, SQLITE_STATIC);
+                sqlite3_step(stmt);
+                sqlite3_finalize(stmt);
+            }
+
+            sqlite3_exec(db, "COMMIT;", NULL, NULL, &err);
+            fclose(fp);
+            printf("%s✔ Seeded records from records.txt into database.%s\n", COLOR_GREEN, COLOR_RESET);
+        }
+    }
+}
+
 // initDB opens (or creates) the SQLite database file and ensures
 // both the users and records tables exist before returning the db pointer.
 sqlite3 *initDB()
@@ -42,5 +144,9 @@ sqlite3 *initDB()
         exit(1);
     }
 
+    // Import legacy .txt data into the DB on first run (skipped if tables already have data)
+    seedDB(db);
+
     return db;
 }
+
