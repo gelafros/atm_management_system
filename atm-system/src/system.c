@@ -163,23 +163,8 @@ int getCountryCode(char *country)
     return -1;
 }
 
-// getPhoneCountryCode checks if the given phone string starts with any valid country code.
-// Returns the matched dial code, or -1 if no match is found.
-int getPhoneCountryCode(const char *phoneStr)
-{
-    int size = sizeof(countryCodes) / sizeof(countryCodes[0]);
-    for (int i = 0; i < size; i++)
-    {
-        char codeStr[10];
-        sprintf(codeStr, "%d", countryCodes[i].code);
-        if (strncmp(phoneStr, codeStr, strlen(codeStr)) == 0)
-            return countryCodes[i].code;
-    }
-    return -1;
-}
-
-// validatePhoneNumber validates that the phone number contains digits only,
-// is between 8 and 15 digits, and starts with a valid country code.
+// validatePhoneNumber validates that the phone number contains digits only
+// and is between 8 and 15 digits.
 int validatePhoneNumber(const char *phoneStr)
 {
     int len = strlen(phoneStr);
@@ -194,12 +179,6 @@ int validatePhoneNumber(const char *phoneStr)
     if (len < 8 || len > 15)
     {
         printf("%s✖ Phone number must be between 8 and 15 digits.%s\n", COLOR_RED, COLOR_RESET);
-        return 0;
-    }
-    int matchedCode = getPhoneCountryCode(phoneStr);
-    if (matchedCode == -1)
-    {
-        printf("%s✖ Phone number must start with a valid country code.%s\n", COLOR_RED, COLOR_RESET);
         return 0;
     }
     return 1;
@@ -217,9 +196,9 @@ noAccount:
     printf("\t\t\t===== New record =====\n");
 
     // --- Deposit date ---
-    // The user enters any valid date (audit uses specific past dates like 10/10/2012
+    // The user enters any valid date 
     // to verify interest calculations — we accept any date, not just today)
-    printf("\nEnter the deposit date (mm/dd/yyyy) or enter 0 to return to main menu: ");
+    printf("\nEnter the date (mm/dd/yyyy) or enter 0 to return to main menu: ");
     char dateInput[50];
     if (scanf("%49s", dateInput) != 1)
     {
@@ -328,9 +307,9 @@ enterAccountNbr:
         printf("\nChoose the type of account:\n");
         printf("\t[1] Saving\n");
         printf("\t[2] Current\n");
-        printf("\t[3] Fixed - 1 year  (4%% interest)\n");
-        printf("\t[4] Fixed - 2 years (5%% interest)\n");
-        printf("\t[5] Fixed - 3 years (8%% interest)\n");
+        printf("\t[3] Fixed01 - 1 year  (4%% interest)\n");
+        printf("\t[4] Fixed02 - 2 years (5%% interest)\n");
+        printf("\t[5] Fixed03 - 3 years (8%% interest)\n");
         printf("\n\tEnter your choice: ");
         if (scanf("%d", &typeChoice) != 1)
         {
