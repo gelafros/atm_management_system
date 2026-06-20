@@ -53,6 +53,7 @@ void makeTransaction(struct User u, sqlite3 *db);
 void updateAcc(struct User u, sqlite3 *db);
 void removeAcc(struct User u, sqlite3 *db);
 void transferOwner(struct User u, sqlite3 *db);
+void displayUserAccounts(struct User u, sqlite3 *db);
 
 // database functions
 sqlite3 *initDB();

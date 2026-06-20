@@ -532,6 +532,38 @@ int userHasAccounts(struct User u, sqlite3 *db)
     return found;
 }
 
+// displayUserAccounts retrieves and prints a list of all accounts owned by the user.
+// Helps the user see which accounts are available before they perform operations.
+void displayUserAccounts(struct User u, sqlite3 *db)
+{
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db,
+        "SELECT account_nbr, type, amount FROM records WHERE name = ?;",
+        -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+
+    printf("\n%s============================================%s\n", COLOR_BLUE, COLOR_RESET);
+    printf("        %sYOUR AVAILABLE ACCOUNTS%s\n", COLOR_GREEN, COLOR_RESET);
+    printf("%s============================================%s\n", COLOR_BLUE, COLOR_RESET);
+
+    int count = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        int accNbr = sqlite3_column_int(stmt, 0);
+        const char *type = (const char *)sqlite3_column_text(stmt, 1);
+        double amount = sqlite3_column_double(stmt, 2);
+        printf("  [Acc #%d] Type: %s | Balance: $%.2f\n", accNbr, type, amount);
+        count++;
+    }
+    sqlite3_finalize(stmt);
+
+    if (count == 0)
+    {
+        printf("  (No accounts registered yet)\n");
+    }
+    printf("%s============================================%s\n\n", COLOR_BLUE, COLOR_RESET);
+}
+
 // makeTransaction handles depositing and withdrawing funds for a given account.
 // Fixed-term accounts (fixed01, fixed02, fixed03) are blocked from transactions.
 // Withdrawals are blocked if the amount exceeds the current balance.
@@ -544,6 +576,9 @@ void makeTransaction(struct User u, sqlite3 *db)
         stayOrReturn(1, makeTransaction, u, db);
         return;
     }
+
+    system("clear");
+    displayUserAccounts(u, db);
 
     // Ask which account number to transact on
     int accNbr;
@@ -676,6 +711,9 @@ void updateAcc(struct User u, sqlite3 *db)
         return;
     }
 
+    system("clear");
+    displayUserAccounts(u, db);
+
     // Ask which account number to update
     int accNbr;
     while (1)
@@ -776,6 +814,9 @@ void removeAcc(struct User u, sqlite3 *db)
         return;
     }
 
+    system("clear");
+    displayUserAccounts(u, db);
+
     // Ask which account to delete
     int accNbr;
     while (1)
@@ -819,6 +860,9 @@ void transferOwner(struct User u, sqlite3 *db)
         stayOrReturn(1, transferOwner, u, db);
         return;
     }
+
+    system("clear");
+    displayUserAccounts(u, db);
 
     // Ask which account to transfer
     int accNbr;
