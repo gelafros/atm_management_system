@@ -80,17 +80,19 @@ void mainMenu(struct User u,sqlite3 *db)
     while (1)
     {
         system("clear");
-        printf("\n\n\t\t======= ATM =======\n\n");
-        printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
-        printf("\n\t\t[1]- Create a new account\n");
-        printf("\n\t\t[2]- Update account information\n");
-        printf("\n\t\t[3]- Check accounts\n");
-        printf("\n\t\t[4]- Check list of owned account\n");
-        printf("\n\t\t[5]- Make Transaction\n");
-        printf("\n\t\t[6]- Remove existing account\n");
-        printf("\n\t\t[7]- Transfer ownership\n");
-        printf("\n\t\t[8]- Exit\n");
-        printf("\n\t\tEnter option: ");
+        printf("\n\t\t" COLOR_CYAN "┌──────────────────────────────────────────────┐" COLOR_RESET "\n");
+        printf("\t\t" COLOR_CYAN "│" STYLE_BOLD COLOR_GREEN "             🏦 ATM MAIN PORTAL               " COLOR_CYAN "│" COLOR_RESET "\n");
+        printf("\t\t" COLOR_CYAN "└──────────────────────────────────────────────┘" COLOR_RESET "\n");
+        printf("\n\t\t" STYLE_BOLD COLOR_YELLOW "  -->> Select a banking transaction:" COLOR_RESET "\n\n");
+        printf("\t\t" COLOR_BLUE "  [1]" COLOR_RESET " Create a new bank account\n");
+        printf("\t\t" COLOR_BLUE "  [2]" COLOR_RESET " Update account contact details\n");
+        printf("\t\t" COLOR_BLUE "  [3]" COLOR_RESET " Check account details & calculate interest\n");
+        printf("\t\t" COLOR_BLUE "  [4]" COLOR_RESET " View list of all owned accounts\n");
+        printf("\t\t" COLOR_BLUE "  [5]" COLOR_RESET " Perform deposit / withdrawal transaction\n");
+        printf("\t\t" COLOR_BLUE "  [6]" COLOR_RESET " Close / remove existing account\n");
+        printf("\t\t" COLOR_BLUE "  [7]" COLOR_RESET " Transfer account ownership\n");
+        printf("\t\t" COLOR_BLUE "  [8]" COLOR_RESET " Exit system\n\n");
+        printf("\t\t" STYLE_BOLD "  Choose option [1-8]: " COLOR_RESET);
         
         if (scanf("%d", &option) != 1) {
             while (getchar() != '\n'); // Clear the input buffer
@@ -140,12 +142,14 @@ void initMenu(struct User *u,sqlite3 *db)
     while (!r)
     {
         system("clear");
-        printf("\n\n\t\t======= ATM =======\n");
-        printf("\n\t\t-->> Feel free to login / register :\n");
-        printf("\n\t\t[1]- login\n");
-        printf("\n\t\t[2]- register\n");
-        printf("\n\t\t[3]- exit\n");
-        printf("\n\t\tEnter option: ");
+        printf("\n\t\t" COLOR_CYAN "┌──────────────────────────────────────────────┐" COLOR_RESET "\n");
+        printf("\t\t" COLOR_CYAN "│" STYLE_BOLD COLOR_GREEN "          🏦 ATM MANAGEMENT SYSTEM            " COLOR_CYAN "│" COLOR_RESET "\n");
+        printf("\t\t" COLOR_CYAN "└──────────────────────────────────────────────┘" COLOR_RESET "\n");
+        printf("\n\t\t" STYLE_BOLD COLOR_YELLOW "  -->> Welcome! Please choose an option below:" COLOR_RESET "\n\n");
+        printf("\t\t" COLOR_BLUE "  [1]" COLOR_RESET " Login to your account\n");
+        printf("\t\t" COLOR_BLUE "  [2]" COLOR_RESET " Register a new account\n");
+        printf("\t\t" COLOR_BLUE "  [3]" COLOR_RESET " Exit system\n\n");
+        printf("\t\t" STYLE_BOLD "  Select option: " COLOR_RESET);
         if (scanf("%d", &option) != 1) {
             while (getchar() != '\n'); // Clear the input buffer
             option = -1; // Set to invalid option

@@ -192,8 +192,9 @@ void createNewAcc(struct User u, sqlite3 *db)
     sqlite3_stmt *stmt;
 
 noAccount:
-    system("clear");
-    printf("\t\t\t===== New record =====\n");
+    printf("\n\t\t" COLOR_CYAN "┌──────────────────────────────────────────────┐" COLOR_RESET "\n");
+    printf("\t\t" COLOR_CYAN "│" STYLE_BOLD COLOR_GREEN "             📝 NEW BANK RECORD               " COLOR_CYAN "│" COLOR_RESET "\n");
+    printf("\t\t" COLOR_CYAN "└──────────────────────────────────────────────┘" COLOR_RESET "\n");
 
     // --- Deposit date ---
     // The user enters any valid date 
@@ -399,8 +400,10 @@ void checkAllAccounts(struct User u, sqlite3 *db)
     sqlite3_stmt *stmt;
     int found = 0;
 
-    system("clear");
-    printf("\t\t====== All accounts from user, %s =====\n\n", u.name);
+    printf("\n\t\t" COLOR_CYAN "┌──────────────────────────────────────────────┐" COLOR_RESET "\n");
+    printf("\t\t" COLOR_CYAN "│" STYLE_BOLD COLOR_GREEN "          📋 OWNED ACCOUNTS LIST              " COLOR_CYAN "│" COLOR_RESET "\n");
+    printf("\t\t" COLOR_CYAN "└──────────────────────────────────────────────┘" COLOR_RESET "\n");
+    printf("\n\t\t" STYLE_BOLD COLOR_YELLOW "  User: %s" COLOR_RESET "\n\n", u.name);
 
     // Query: get every record row that belongs to this user.
     // We JOIN with the 'users' table to fetch the username dynamically.
@@ -448,8 +451,9 @@ void checkAcc(struct User u, sqlite3 *db)
     int found = 0;
     double interest;
 
-    system("clear");
-    printf("\t\t====== Your accounts =====\n\n");
+    printf("\n\t\t" COLOR_CYAN "┌──────────────────────────────────────────────┐" COLOR_RESET "\n");
+    printf("\t\t" COLOR_CYAN "│" STYLE_BOLD COLOR_GREEN "          🔍 DETAILED ACCOUNT CHECK           " COLOR_CYAN "│" COLOR_RESET "\n");
+    printf("\t\t" COLOR_CYAN "└──────────────────────────────────────────────┘" COLOR_RESET "\n\n");
 
     // --- First pass: show a summary list of all accounts for this user ---
     // We JOIN with the 'users' table to fetch the owner's name.
@@ -600,9 +604,9 @@ void displayUserAccounts(struct User u, sqlite3 *db)
         -1, &stmt, NULL);
     sqlite3_bind_int(stmt, 1, u.id);
 
-    printf("\n%s============================================%s\n", COLOR_BLUE, COLOR_RESET);
-    printf("        %sYOUR AVAILABLE ACCOUNTS%s\n", COLOR_GREEN, COLOR_RESET);
-    printf("%s============================================%s\n", COLOR_BLUE, COLOR_RESET);
+    printf("\n\t\t" COLOR_BLUE "┌──────────────────────────────────────────────┐" COLOR_RESET "\n");
+    printf("\t\t" COLOR_BLUE "│" STYLE_BOLD COLOR_GREEN "            📂 YOUR AVAILABLE ACCOUNTS        " COLOR_BLUE "│" COLOR_RESET "\n");
+    printf("\t\t" COLOR_BLUE "├──────────────────────────────────────────────┤" COLOR_RESET "\n");
 
     int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -610,16 +614,16 @@ void displayUserAccounts(struct User u, sqlite3 *db)
         int accNbr = sqlite3_column_int(stmt, 0);
         const char *type = (const char *)sqlite3_column_text(stmt, 1);
         double amount = sqlite3_column_double(stmt, 2);
-        printf("  [Acc #%d] Type: %s | Balance: $%.2f\n", accNbr, type, amount);
+        printf("\t\t" COLOR_BLUE "│" COLOR_RESET "  Account #%-8d | %-8s | $%-10.2f " COLOR_BLUE "│" COLOR_RESET "\n", accNbr, type, amount);
         count++;
     }
     sqlite3_finalize(stmt);
 
     if (count == 0)
     {
-        printf("  (No accounts registered yet)\n");
+        printf("\t\t" COLOR_BLUE "│" COLOR_RED "  (No accounts registered yet)                " COLOR_BLUE "│" COLOR_RESET "\n");
     }
-    printf("%s============================================%s\n\n", COLOR_BLUE, COLOR_RESET);
+    printf("\t\t" COLOR_BLUE "└──────────────────────────────────────────────┘" COLOR_RESET "\n\n");
 }
 
 // makeTransaction handles depositing and withdrawing funds for a given account.
