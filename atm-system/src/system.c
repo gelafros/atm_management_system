@@ -836,7 +836,7 @@ void updateAcc(struct User u, sqlite3 *db)
         // Account not found: show a clear error message, print warning and try again
         sqlite3_finalize(stmt);
         printf("%s\n✖ Error: Account #%d does not exist or does not belong to you.%s\n", COLOR_RED, accNbr, COLOR_RESET);
-        printf("Please choose from one of your available accounts listed below.\n");
+        printf("Please choose from one of your available accounts listed .\n");
         sleep(3);
     }
 
