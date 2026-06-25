@@ -218,13 +218,20 @@ noAccount:
 
 enterAccountNbr:
     // --- Account number ---
-    printf("\nEnter the account number (or press 0 to auto-generate): ");
+    printf("\nEnter the account number (or press 0 to auto-generate, or enter -1 to cancel): ");
     if (scanf("%d", &r.accountNbr) != 1)
     {
         while (getchar() != '\n');
         printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
         sleep(3);
         goto enterAccountNbr;
+    }
+
+    if (r.accountNbr == -1)
+    {
+        printf("\nAccount creation cancelled.\n");
+        sleep(2);
+        return;
     }
 
     if (r.accountNbr == 0)
@@ -266,9 +273,15 @@ enterAccountNbr:
     int code = -1;
     while (code == -1)
     {
-        printf("\nEnter the country: ");
+        printf("\nEnter the country (or enter 0 to cancel): ");
         // Use a width limit of 99 to prevent buffer overflow on the 100-byte country buffer.
         scanf("%99s", r.country);
+        if (strcmp(r.country, "0") == 0)
+        {
+            printf("\nAccount creation cancelled.\n");
+            sleep(2);
+            return;
+        }
         code = getCountryCode(r.country);
         if (code == -1)
             printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, r.country, COLOR_RESET);
@@ -280,9 +293,16 @@ enterAccountNbr:
     int phoneValid = 0;
     while (!phoneValid)
     {
-        printf("\nEnter phone number (with country code e.g. %d...): ", code);
+        printf("\nEnter phone number (with country code e.g. %d...) or enter 0 to cancel: ", code);
         scanf("%19s", phoneStr);
         while (getchar() != '\n');
+
+        if (strcmp(phoneStr, "0") == 0)
+        {
+            printf("\nAccount creation cancelled.\n");
+            sleep(2);
+            return;
+        }
 
         if (validatePhoneNumber(phoneStr))
         {
@@ -294,11 +314,20 @@ enterAccountNbr:
     // --- Initial deposit amount ---
     while (1)
     {
-        printf("\nEnter amount to deposit: $");
-        if (scanf("%lf", &r.amount) == 1 && r.amount > 0.0)
-            break;
+        printf("\nEnter amount to deposit (or enter 0 to cancel): $");
+        if (scanf("%lf", &r.amount) == 1)
+        {
+            if (r.amount == 0.0)
+            {
+                printf("\nAccount creation cancelled.\n");
+                sleep(2);
+                return;
+            }
+            if (r.amount > 0.0)
+                break;
+        }
         while (getchar() != '\n');
-        printf("%s✖ Invalid deposit amount! Must be a positive number.%s\n", COLOR_RED, COLOR_RESET);
+        printf("%s✖ Invalid deposit amount! Must be a positive number (or 0 to cancel).%s\n", COLOR_RED, COLOR_RESET);
     }
 
     // --- Account type selection ---
@@ -311,11 +340,18 @@ enterAccountNbr:
         printf("\t[3] Fixed01 - 1 year  (4%% interest)\n");
         printf("\t[4] Fixed02 - 2 years (5%% interest)\n");
         printf("\t[5] Fixed03 - 3 years (8%% interest)\n");
+        printf("\t[0] Cancel\n");
         printf("\n\tEnter your choice: ");
         if (scanf("%d", &typeChoice) != 1)
         {
             while (getchar() != '\n');
-            typeChoice = 0;
+            typeChoice = -1;
+        }
+        if (typeChoice == 0)
+        {
+            printf("\nAccount creation cancelled.\n");
+            sleep(2);
+            return;
         }
         switch (typeChoice)
         {
@@ -325,8 +361,8 @@ enterAccountNbr:
             case 4: strcpy(r.accountType, "fixed02"); break;
             case 5: strcpy(r.accountType, "fixed03"); break;
             default:
-                printf("%s✖ Invalid choice. Please enter a number between 1 and 5.%s\n", COLOR_RED, COLOR_RESET);
-                typeChoice = 0;
+                printf("%s✖ Invalid choice. Please enter a number between 0 and 5.%s\n", COLOR_RED, COLOR_RESET);
+                typeChoice = -1;
         }
     }
 
@@ -667,14 +703,23 @@ void makeTransaction(struct User u, sqlite3 *db)
         {
             // --- Deposit: add money to the account ---
             double deposit;
-            printf("_____________________\n");
             while (1)
             {
-                printf("\nEnter amount to deposit: $");
-                if (scanf("%lf", &deposit) == 1 && deposit > 0.0)
-                    break;
+                printf("_____________________\n");
+                printf("\nEnter amount to deposit (or enter 0 to cancel): $");
+                if (scanf("%lf", &deposit) == 1)
+                {
+                    if (deposit == 0.0)
+                    {
+                        printf("\nTransaction cancelled.\n");
+                        sleep(2);
+                        return;
+                    }
+                    if (deposit > 0.0)
+                        break;
+                }
                 while (getchar() != '\n');
-                printf("%s✖ Invalid amount! Must be a positive number.%s\n", COLOR_RED, COLOR_RESET);
+                printf("%s✖ Invalid amount! Must be a positive number (or 0 to cancel).%s\n", COLOR_RED, COLOR_RESET);
             }
             r.amount += deposit; // update the local amount
             printf("_____________________\n");
@@ -684,30 +729,42 @@ void makeTransaction(struct User u, sqlite3 *db)
         {
             // --- Withdrawal: remove money from the account ---
             double withdraw;
-            printf("_____________________\n");
             while (1)
             {
-                printf("\nEnter amount to withdraw: $");
-                if (scanf("%lf", &withdraw) == 1 && withdraw > 0.0)
-                    break;
-                while (getchar() != '\n');
-                printf("%s✖ Invalid amount! Must be a positive number.%s\n", COLOR_RED, COLOR_RESET);
-            }
+                printf("_____________________\n");
+                while (1)
+                {
+                    printf("\nEnter amount to withdraw (or enter 0 to cancel): $");
+                    if (scanf("%lf", &withdraw) == 1)
+                    {
+                        if (withdraw == 0.0)
+                        {
+                            printf("\nTransaction cancelled.\n");
+                            sleep(2);
+                            return;
+                        }
+                        if (withdraw > 0.0)
+                            break;
+                    }
+                    while (getchar() != '\n');
+                    printf("%s✖ Invalid amount! Must be a positive number (or 0 to cancel).%s\n", COLOR_RED, COLOR_RESET);
+                }
 
-            if (r.amount >= withdraw)
-            {
-                r.amount -= withdraw; // update the local amount
-                printf("_____________________\n");
-                printf("New balance: $%.2f\n", r.amount);
-            }
-            else
-            {
-                // Overdraft protection — cannot withdraw more than the balance
-                printf("_____________________\n");
-                printf("%s\n✖ Withdrawal denied. Insufficient funds.%s\n", COLOR_RED, COLOR_RESET);
-                printf("Available balance: $%.2f\n", r.amount);
-                success(u);
-                return;
+                if (r.amount >= withdraw)
+                {
+                    r.amount -= withdraw; // update the local amount
+                    printf("_____________________\n");
+                    printf("New balance: $%.2f\n", r.amount);
+                    break;
+                }
+                else
+                {
+                    // Overdraft protection — cannot withdraw more than the balance
+                    printf("_____________________\n");
+                    printf("%s\n✖ Withdrawal denied. Insufficient funds.%s\n", COLOR_RED, COLOR_RESET);
+                    printf("Available balance: $%.2f\n", r.amount);
+                    printf("Please enter a smaller amount.\n");
+                }
             }
         }
     }
@@ -739,40 +796,49 @@ void updateAcc(struct User u, sqlite3 *db)
         return;
     }
 
-    system("clear");
-    displayUserAccounts(u, db);
-
-    // Ask which account number to update
     int accNbr;
+    sqlite3_stmt *stmt;
+
+    // Retry loop for account verification
     while (1)
     {
-        printf("\nEnter the account number (or enter -1 to return to main menu): ");
-        if (scanf("%d", &accNbr) == 1)
+        system("clear");
+        displayUserAccounts(u, db);
+
+        printf("\nEnter the account number to update (or enter -1 to return to main menu): ");
+        if (scanf("%d", &accNbr) != 1)
+        {
+            while (getchar() != '\n');
+            printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
+            sleep(2);
+            continue;
+        }
+
+        if (accNbr == -1)
+        {
+            return;
+        }
+
+        // --- Verify the account exists for this user ---
+        sqlite3_prepare_v2(db,
+            "SELECT id FROM records WHERE user_id = ? AND account_nbr = ?;",
+            -1, &stmt, NULL);
+        sqlite3_bind_int(stmt, 1, u.id);
+        sqlite3_bind_int(stmt, 2, accNbr);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            // Account found, proceed
+            sqlite3_finalize(stmt);
             break;
-        while (getchar() != '\n');
-        printf("%s✖ Invalid account number! Please enter digits only.%s\n", COLOR_RED, COLOR_RESET);
-    }
-    if (accNbr == -1)
-    {
-        return;
-    }
-
-    // --- Verify the account exists for this user ---
-    sqlite3_stmt *stmt;
-    sqlite3_prepare_v2(db,
-        "SELECT id FROM records WHERE user_id = ? AND account_nbr = ?;",
-        -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, u.id);
-    sqlite3_bind_int (stmt, 2, accNbr);
-
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        // Account not found for this user
+        }
+        
+        // Account not found: show a clear error message, print warning and try again
         sqlite3_finalize(stmt);
-        stayOrReturn(0, updateAcc, u, db);
-        return;
+        printf("%s\n✖ Error: Account #%d does not exist or does not belong to you.%s\n", COLOR_RED, accNbr, COLOR_RESET);
+        printf("Please choose from one of your available accounts listed below.\n");
+        sleep(3);
     }
-    sqlite3_finalize(stmt);
 
     // --- Ask which field to update ---
     int choice;
@@ -795,13 +861,20 @@ void updateAcc(struct User u, sqlite3 *db)
             printf("_____________________\n");
             while (!phoneValid)
             {
-                printf("\nEnter the new phone number (with country code): ");
+                printf("\nEnter the new phone number (with country code) or enter 0 to cancel: ");
                 if (scanf("%19s", phoneStr) != 1)
                 {
                     while (getchar() != '\n');
                     continue;
                 }
                 while (getchar() != '\n');
+
+                if (strcmp(phoneStr, "0") == 0)
+                {
+                    printf("\nUpdate cancelled.\n");
+                    sleep(2);
+                    return;
+                }
 
                 if (validatePhoneNumber(phoneStr))
                 {
@@ -828,9 +901,15 @@ void updateAcc(struct User u, sqlite3 *db)
             printf("_____________________\n");
             while (code == -1)
             {
-                printf("\nEnter the new country: ");
+                printf("\nEnter the new country (or enter 0 to cancel): ");
                 // Use a width limit of 99 to prevent buffer overflow on the 100-byte newCountry buffer.
                 scanf("%99s", newCountry);
+                if (strcmp(newCountry, "0") == 0)
+                {
+                    printf("\nUpdate cancelled.\n");
+                    sleep(2);
+                    return;
+                }
                 code = getCountryCode(newCountry);
                 if (code == -1)
                     printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, newCountry, COLOR_RESET);
