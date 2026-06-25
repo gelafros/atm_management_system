@@ -90,6 +90,7 @@ void mainMenu(struct User u,sqlite3 *db)
         printf("\n\t\t[6]- Remove existing account\n");
         printf("\n\t\t[7]- Transfer ownership\n");
         printf("\n\t\t[8]- Exit\n");
+        printf("\n\t\tEnter option: ");
         
         if (scanf("%d", &option) != 1) {
             while (getchar() != '\n'); // Clear the input buffer
