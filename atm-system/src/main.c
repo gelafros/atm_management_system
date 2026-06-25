@@ -136,14 +136,15 @@ void initMenu(struct User *u,sqlite3 *db)
 {
     int r = 0;
     int option;
-    system("clear");
-    printf("\n\n\t\t======= ATM =======\n");
-    printf("\n\t\t-->> Feel free to login / register :\n");
-    printf("\n\t\t[1]- login\n");
-    printf("\n\t\t[2]- register\n");
-    printf("\n\t\t[3]- exit\n");
     while (!r)
     {
+        system("clear");
+        printf("\n\n\t\t======= ATM =======\n");
+        printf("\n\t\t-->> Feel free to login / register :\n");
+        printf("\n\t\t[1]- login\n");
+        printf("\n\t\t[2]- register\n");
+        printf("\n\t\t[3]- exit\n");
+        printf("\n\t\tEnter option: ");
         if (scanf("%d", &option) != 1) {
             while (getchar() != '\n'); // Clear the input buffer
             option = -1; // Set to invalid option
@@ -199,37 +200,51 @@ void initMenu(struct User *u,sqlite3 *db)
         case 2:
             // --- REGISTRATION ---
             // Keep asking for a username until we get one that doesn't exist yet
-            while (1)
             {
-                printf("\n\n\t\"Type in a new Username: ");
-                // Use a width limit of 49 to prevent buffer overflow on the 50-byte username buffer.
-                scanf("%49s", u->name);
-                while (getchar() != '\n'); // Clear the newline left in the buffer
-
-                // --- Check if username already exists in the database ---
-                sqlite3_stmt *stmt;
-
-                // Query: look for any user with this exact name
-                sqlite3_prepare_v2(db,
-                    "SELECT id FROM users WHERE name = ?;",
-                    -1, &stmt, NULL);
-
-                // Bind the typed username as the search value
-                sqlite3_bind_text(stmt, 1, u->name, -1, SQLITE_STATIC);
-
-                // SQLITE_ROW = a row was found = username already taken
-                int nameExists = (sqlite3_step(stmt) == SQLITE_ROW);
-
-                // Always clean up the statement after use
-                sqlite3_finalize(stmt);
-
-                if (nameExists)
+                int cancelled = 0;
+                while (1)
                 {
-                    printf("%s\n✖ Registration failed! A user with this name already exists. Please try another username.%s\n", COLOR_RED, COLOR_RESET);
+                    printf("\n\n\t\"Type in a new Username (or enter 0 to return to welcome menu): ");
+                    // Use a width limit of 49 to prevent buffer overflow on the 50-byte username buffer.
+                    scanf("%49s", u->name);
+                    while (getchar() != '\n'); // Clear the newline left in the buffer
+
+                    if (strcmp(u->name, "0") == 0)
+                    {
+                        cancelled = 1;
+                        break;
+                    }
+
+                    // --- Check if username already exists in the database ---
+                    sqlite3_stmt *stmt;
+
+                    // Query: look for any user with this exact name
+                    sqlite3_prepare_v2(db,
+                        "SELECT id FROM users WHERE name = ?;",
+                        -1, &stmt, NULL);
+
+                    // Bind the typed username as the search value
+                    sqlite3_bind_text(stmt, 1, u->name, -1, SQLITE_STATIC);
+
+                    // SQLITE_ROW = a row was found = username already taken
+                    int nameExists = (sqlite3_step(stmt) == SQLITE_ROW);
+
+                    // Always clean up the statement after use
+                    sqlite3_finalize(stmt);
+
+                    if (nameExists)
+                    {
+                        printf("%s\n✖ Registration failed! A user with this name already exists. Please try another username (or enter 0 to return).%s\n", COLOR_RED, COLOR_RESET);
+                    }
+                    else
+                    {
+                        break; // Username is unique — exit the loop
+                    }
                 }
-                else
+
+                if (cancelled)
                 {
-                    break; // Username is unique — exit the loop
+                    break; // Break the switch case to return to welcome option selection loop
                 }
             }
 
