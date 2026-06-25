@@ -245,11 +245,11 @@ enterAccountNbr:
     else
     {
         // --- Check for duplicate account number for this user ---
-        // Query: does a record already exist with this user + account number combination?
+        // Query: does a record already exist with this user ID + account number combination?
         sqlite3_prepare_v2(db,
-            "SELECT id FROM records WHERE name = ? AND account_nbr = ?;",
+            "SELECT id FROM records WHERE user_id = ? AND account_nbr = ?;",
             -1, &stmt, NULL);
-        sqlite3_bind_text(stmt, 1, u.name,       -1, SQLITE_STATIC);
+        sqlite3_bind_int (stmt, 1, u.id);
         sqlite3_bind_int (stmt, 2, r.accountNbr);
 
         if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -336,20 +336,20 @@ enterAccountNbr:
     sprintf(dateStr, "%d/%d/%d", r.deposit.month, r.deposit.day, r.deposit.year);
 
     // --- INSERT the new account into the database ---
-    // The id column is AUTOINCREMENT — SQLite assigns it automatically
+    // The id column is AUTOINCREMENT — SQLite assigns it automatically.
+    // 'name' is omitted as it is now retrieved via standard SQL JOIN with 'users' table.
     sqlite3_prepare_v2(db,
-        "INSERT INTO records (user_id, name, account_nbr, deposit_date, country, phone, amount, type) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        "INSERT INTO records (user_id, account_nbr, deposit_date, country, phone, amount, type) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?);",
         -1, &stmt, NULL);
 
     sqlite3_bind_int   (stmt, 1, u.id);              // owner's user id (foreign key)
-    sqlite3_bind_text  (stmt, 2, u.name,       -1, SQLITE_STATIC);
-    sqlite3_bind_int   (stmt, 3, r.accountNbr);
-    sqlite3_bind_text  (stmt, 4, dateStr,      -1, SQLITE_STATIC);
-    sqlite3_bind_text  (stmt, 5, r.country,    -1, SQLITE_STATIC);
-    sqlite3_bind_int64 (stmt, 6, r.phone);
-    sqlite3_bind_double(stmt, 7, r.amount);
-    sqlite3_bind_text  (stmt, 8, r.accountType,-1, SQLITE_STATIC);
+    sqlite3_bind_int   (stmt, 2, r.accountNbr);
+    sqlite3_bind_text  (stmt, 3, dateStr,      -1, SQLITE_STATIC);
+    sqlite3_bind_text  (stmt, 4, r.country,    -1, SQLITE_STATIC);
+    sqlite3_bind_int64 (stmt, 5, r.phone);
+    sqlite3_bind_double(stmt, 6, r.amount);
+    sqlite3_bind_text  (stmt, 7, r.accountType,-1, SQLITE_STATIC);
 
     sqlite3_step(stmt);     // execute the INSERT
     sqlite3_finalize(stmt); // free the prepared statement
@@ -366,12 +366,15 @@ void checkAllAccounts(struct User u, sqlite3 *db)
     system("clear");
     printf("\t\t====== All accounts from user, %s =====\n\n", u.name);
 
-    // Query: get every record row that belongs to this user
+    // Query: get every record row that belongs to this user.
+    // We JOIN with the 'users' table to fetch the username dynamically.
     sqlite3_prepare_v2(db,
-        "SELECT id, user_id, name, account_nbr, deposit_date, country, phone, amount, type "
-        "FROM records WHERE name = ?;",
+        "SELECT r.id, r.user_id, u.name, r.account_nbr, r.deposit_date, r.country, r.phone, r.amount, r.type "
+        "FROM records r "
+        "JOIN users u ON r.user_id = u.id "
+        "WHERE r.user_id = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 1, u.id);
 
     // Iterate through each result row — each row is one account
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -413,11 +416,14 @@ void checkAcc(struct User u, sqlite3 *db)
     printf("\t\t====== Your accounts =====\n\n");
 
     // --- First pass: show a summary list of all accounts for this user ---
+    // We JOIN with the 'users' table to fetch the owner's name.
     sqlite3_prepare_v2(db,
-        "SELECT id, user_id, name, account_nbr, deposit_date, country, phone, amount, type "
-        "FROM records WHERE name = ?;",
+        "SELECT r.id, r.user_id, u.name, r.account_nbr, r.deposit_date, r.country, r.phone, r.amount, r.type "
+        "FROM records r "
+        "JOIN users u ON r.user_id = u.id "
+        "WHERE r.user_id = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 1, u.id);
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -458,12 +464,15 @@ void checkAcc(struct User u, sqlite3 *db)
     found = 0; // reset for the second query
 
     // Query: find only the specific account the user chose
+    // We JOIN with the 'users' table to fetch the owner's name.
     sqlite3_prepare_v2(db,
-        "SELECT id, user_id, name, account_nbr, deposit_date, country, phone, amount, type "
-        "FROM records WHERE name = ? AND account_nbr = ?;",
+        "SELECT r.id, r.user_id, u.name, r.account_nbr, r.deposit_date, r.country, r.phone, r.amount, r.type "
+        "FROM records r "
+        "JOIN users u ON r.user_id = u.id "
+        "WHERE r.user_id = ? AND r.account_nbr = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
-    sqlite3_bind_int (stmt, 2, accNbr);
+    sqlite3_bind_int(stmt, 1, u.id);
+    sqlite3_bind_int(stmt, 2, accNbr);
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
@@ -535,9 +544,9 @@ int userHasAccounts(struct User u, sqlite3 *db)
 
     // LIMIT 1 keeps this fast — we only need to know if any row exists, not how many
     sqlite3_prepare_v2(db,
-        "SELECT id FROM records WHERE name = ? LIMIT 1;",
+        "SELECT id FROM records WHERE user_id = ? LIMIT 1;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 1, u.id);
 
     // SQLITE_ROW = at least one account was found for this user
     int found = (sqlite3_step(stmt) == SQLITE_ROW);
@@ -551,9 +560,9 @@ void displayUserAccounts(struct User u, sqlite3 *db)
 {
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-        "SELECT account_nbr, type, amount FROM records WHERE name = ?;",
+        "SELECT account_nbr, type, amount FROM records WHERE user_id = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 1, u.id);
 
     printf("\n%s============================================%s\n", COLOR_BLUE, COLOR_RESET);
     printf("        %sYOUR AVAILABLE ACCOUNTS%s\n", COLOR_GREEN, COLOR_RESET);
@@ -611,11 +620,13 @@ void makeTransaction(struct User u, sqlite3 *db)
     // --- Load the account from the database ---
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-        "SELECT id, user_id, name, account_nbr, deposit_date, country, phone, amount, type "
-        "FROM records WHERE name = ? AND account_nbr = ?;",
+        "SELECT r.id, r.user_id, u.name, r.account_nbr, r.deposit_date, r.country, r.phone, r.amount, r.type "
+        "FROM records r "
+        "JOIN users u ON r.user_id = u.id "
+        "WHERE r.user_id = ? AND r.account_nbr = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
-    sqlite3_bind_int (stmt, 2, accNbr);
+    sqlite3_bind_int(stmt, 1, u.id);
+    sqlite3_bind_int(stmt, 2, accNbr);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
@@ -705,10 +716,10 @@ void makeTransaction(struct User u, sqlite3 *db)
     // --- Save the updated balance back to the database ---
     // Only the amount column changes — all other fields remain the same
     sqlite3_prepare_v2(db,
-        "UPDATE records SET amount = ? WHERE name = ? AND account_nbr = ?;",
+        "UPDATE records SET amount = ? WHERE user_id = ? AND account_nbr = ?;",
         -1, &stmt, NULL);
     sqlite3_bind_double(stmt, 1, r.amount);            // new balance
-    sqlite3_bind_text  (stmt, 2, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int   (stmt, 2, u.id);
     sqlite3_bind_int   (stmt, 3, accNbr);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -749,9 +760,9 @@ void updateAcc(struct User u, sqlite3 *db)
     // --- Verify the account exists for this user ---
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-        "SELECT id FROM records WHERE name = ? AND account_nbr = ?;",
+        "SELECT id FROM records WHERE user_id = ? AND account_nbr = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 1, u.id);
     sqlite3_bind_int (stmt, 2, accNbr);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
@@ -801,10 +812,10 @@ void updateAcc(struct User u, sqlite3 *db)
 
             // SET only the phone column — other fields unchanged
             sqlite3_prepare_v2(db,
-                "UPDATE records SET phone = ? WHERE name = ? AND account_nbr = ?;",
+                "UPDATE records SET phone = ? WHERE user_id = ? AND account_nbr = ?;",
                 -1, &stmt, NULL);
             sqlite3_bind_int64(stmt, 1, newPhone);
-            sqlite3_bind_text (stmt, 2, u.name, -1, SQLITE_STATIC);
+            sqlite3_bind_int  (stmt, 2, u.id);
             sqlite3_bind_int  (stmt, 3, accNbr);
             sqlite3_step(stmt);
             sqlite3_finalize(stmt);
@@ -827,10 +838,10 @@ void updateAcc(struct User u, sqlite3 *db)
 
             // SET only the country column — other fields unchanged
             sqlite3_prepare_v2(db,
-                "UPDATE records SET country = ? WHERE name = ? AND account_nbr = ?;",
+                "UPDATE records SET country = ? WHERE user_id = ? AND account_nbr = ?;",
                 -1, &stmt, NULL);
             sqlite3_bind_text(stmt, 1, newCountry, -1, SQLITE_STATIC);
-            sqlite3_bind_text(stmt, 2, u.name,     -1, SQLITE_STATIC);
+            sqlite3_bind_int (stmt, 2, u.id);
             sqlite3_bind_int (stmt, 3, accNbr);
             sqlite3_step(stmt);
             sqlite3_finalize(stmt);
@@ -874,9 +885,9 @@ void removeAcc(struct User u, sqlite3 *db)
     // DELETE the row matching this user + account number
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-        "DELETE FROM records WHERE name = ? AND account_nbr = ?;",
+        "DELETE FROM records WHERE user_id = ? AND account_nbr = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 1, u.id);
     sqlite3_bind_int (stmt, 2, accNbr);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -925,9 +936,9 @@ void transferOwner(struct User u, sqlite3 *db)
     // --- Verify the account exists and belongs to this user ---
     sqlite3_stmt *stmt;
     sqlite3_prepare_v2(db,
-        "SELECT id FROM records WHERE name = ? AND account_nbr = ?;",
+        "SELECT id FROM records WHERE user_id = ? AND account_nbr = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, u.name, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 1, u.id);
     sqlite3_bind_int (stmt, 2, accNbr);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
@@ -975,18 +986,16 @@ void transferOwner(struct User u, sqlite3 *db)
     }
 
     // --- Verify the recipient doesn't already own an account with this number ---
-    // We query by recipient name and account number to make sure the target user
-    // doesn't already have an account with the same number.
+    // We query by recipient user ID and account number to make sure they do not already have it.
     sqlite3_prepare_v2(db,
-        "SELECT id FROM records WHERE name = ? AND account_nbr = ?;",
+        "SELECT id FROM records WHERE user_id = ? AND account_nbr = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, newUserName, -1, SQLITE_STATIC);
-    sqlite3_bind_int (stmt, 2, accNbr);
+    sqlite3_bind_int(stmt, 1, newUserId);
+    sqlite3_bind_int(stmt, 2, accNbr);
 
     if (sqlite3_step(stmt) == SQLITE_ROW)
     {
         // Recipient already owns an account with this number.
-        // Finalize the statement to prevent a resource leak and abort the transfer.
         sqlite3_finalize(stmt);
         printf("%s\n✖ Transfer failed! The recipient '%s' already owns an account with number %d.%s\n", COLOR_RED, newUserName, accNbr, COLOR_RESET);
         stayOrReturn(1, transferOwner, u, db);
@@ -994,29 +1003,30 @@ void transferOwner(struct User u, sqlite3 *db)
     }
     sqlite3_finalize(stmt);
 
-    // --- Update the record: change both the name and user_id to the new owner ---
+    // --- Update the record: change only the user_id to the new owner ---
+    // We no longer update 'name' because the 'records' table is normalized.
     sqlite3_prepare_v2(db,
-        "UPDATE records SET name = ?, user_id = ? WHERE name = ? AND account_nbr = ?;",
+        "UPDATE records SET user_id = ? WHERE user_id = ? AND account_nbr = ?;",
         -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, newUserName, -1, SQLITE_STATIC); // new owner's name
-    sqlite3_bind_int (stmt, 2, newUserId);                       // new owner's id
-    sqlite3_bind_text(stmt, 3, u.name,      -1, SQLITE_STATIC); // current owner's name
-    sqlite3_bind_int (stmt, 4, accNbr);                          // account being transferred
+    sqlite3_bind_int(stmt, 1, newUserId); // new owner's ID
+    sqlite3_bind_int(stmt, 2, u.id);      // current owner's ID
+    sqlite3_bind_int(stmt, 3, accNbr);     // account being transferred
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    // --- Save the transfer notification in SQLite ---
-    sqlite3_prepare_v2(db,
-        "INSERT INTO notifications (recipient_id, message) VALUES (?, ?);",
-        -1, &stmt, NULL);
-    sqlite3_bind_int(stmt, 1, newUserId);
+    // --- Send the transfer notification instantly via FIFO pipe ---
+    char target_fifo[150];
+    snprintf(target_fifo, sizeof(target_fifo), "./data/fifo_%s", newUserName);
 
-    char notifMsg[300];
-    sprintf(notifMsg, "Account #%d has been transferred to you by %s.\n", accNbr, u.name);
-    sqlite3_bind_text(stmt, 2, notifMsg, -1, SQLITE_STATIC);
-
-    sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
+    // Open the recipient's FIFO in non-blocking write mode so we don't hang if they are offline
+    int fd = open(target_fifo, O_WRONLY | O_NONBLOCK);
+    if (fd != -1)
+    {
+        char notifMsg[300];
+        snprintf(notifMsg, sizeof(notifMsg), "Account #%d has been transferred to you by %s.", accNbr, u.name);
+        write(fd, notifMsg, strlen(notifMsg));
+        close(fd);
+    }
 
     success(u);
 }

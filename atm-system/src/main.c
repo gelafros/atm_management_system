@@ -1,5 +1,77 @@
 #include "header.h"
 
+// Globals to manage the background notification child process and its FIFO pipe
+static pid_t notification_child_pid = -1;
+static char fifo_path[150] = "";
+
+// stopNotificationListener kills the child background listener and unlinks the FIFO file
+void stopNotificationListener()
+{
+    if (notification_child_pid > 0)
+    {
+        kill(notification_child_pid, SIGTERM);
+        notification_child_pid = -1;
+    }
+    if (fifo_path[0] != '\0')
+    {
+        unlink(fifo_path);
+        fifo_path[0] = '\0';
+    }
+}
+
+// startNotificationListener forks a background child process that blocks on the user's FIFO
+// and prints any incoming transfer notifications directly to the terminal instantly.
+void startNotificationListener(struct User u)
+{
+    // Clean up any old listener first
+    stopNotificationListener();
+
+    // Construct the path for this user's named pipe
+    snprintf(fifo_path, sizeof(fifo_path), "./data/fifo_%s", u.name);
+
+    // Create the FIFO (named pipe) with read/write permissions
+    mkfifo(fifo_path, 0666);
+
+    // Fork a child process to listen to the FIFO in the background
+    notification_child_pid = fork();
+    if (notification_child_pid < 0)
+    {
+        // Fork failed
+        return;
+    }
+    else if (notification_child_pid == 0)
+    {
+        // --- Child Process ---
+        char buffer[300];
+        while (1)
+        {
+            // Open the FIFO for reading (blocks until a writer opens it)
+            int fd = open(fifo_path, O_RDONLY);
+            if (fd == -1)
+            {
+                sleep(1);
+                continue;
+            }
+
+            // Read the message from the writer
+            ssize_t bytesRead = read(fd, buffer, sizeof(buffer) - 1);
+            if (bytesRead > 0)
+            {
+                buffer[bytesRead] = '\0';
+                // Print the notification directly to the shared stdout of the terminal
+                printf("\n\n%s📬 Instant Notification: %s%s\n", COLOR_GREEN, buffer, COLOR_RESET);
+                fflush(stdout);
+            }
+            close(fd);
+        }
+        exit(0);
+    }
+
+    // --- Parent Process ---
+    // Register the cleanup function to automatically run when the parent exits
+    atexit(stopNotificationListener);
+}
+
 // mainMenu displays the primary ATM operations available to an authenticated user and handles their selection.
 // It routes the user to various system functions like creating accounts, making transactions, and checking balances.
 void mainMenu(struct User u,sqlite3 *db)
@@ -7,38 +79,6 @@ void mainMenu(struct User u,sqlite3 *db)
     int option;
     while (1)
     {
-        // --- Check for pending transfer notifications in SQLite ---
-        sqlite3_stmt *stmt;
-        sqlite3_prepare_v2(db,
-            "SELECT id, message FROM notifications WHERE recipient_id = ?;",
-            -1, &stmt, NULL);
-        sqlite3_bind_int(stmt, 1, u.id);
-
-        int hasNotif = 0;
-        while (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            if (!hasNotif)
-            {
-                printf("\n%s📬 Notification:%s\n", COLOR_GREEN, COLOR_RESET);
-                hasNotif = 1;
-            }
-            const char *msg = (const char *)sqlite3_column_text(stmt, 1);
-            printf("  - %s", msg);
-        }
-        sqlite3_finalize(stmt);
-
-        if (hasNotif)
-        {
-            // Delete all read notifications for this user
-            sqlite3_prepare_v2(db,
-                "DELETE FROM notifications WHERE recipient_id = ?;",
-                -1, &stmt, NULL);
-            sqlite3_bind_int(stmt, 1, u.id);
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-            sleep(3);
-        }
-
         system("clear");
         printf("\n\n\t\t======= ATM =======\n\n");
         printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
@@ -250,6 +290,11 @@ int main()
     struct User u;
     sqlite3 *db=initDB();
     initMenu(&u,db);
+    
+    // Start background IPC notification listener for this session
+    extern void startNotificationListener(struct User u);
+    startNotificationListener(u);
+
     mainMenu(u,db);
     sqlite3_close(db);
     return 0;

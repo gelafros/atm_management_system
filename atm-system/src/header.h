@@ -5,6 +5,13 @@
 #include <unistd.h>
 #include <sqlite3.h>
 
+// Systems programming headers for named pipes (FIFOs), signal handling, and error checking
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <errno.h>
+
 #define COLOR_RED     "\x1b[31m"
 #define COLOR_GREEN   "\x1b[32m"
 #define COLOR_YELLOW  "\x1b[33m"

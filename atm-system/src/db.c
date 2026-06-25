@@ -86,20 +86,20 @@ static void seedDB(sqlite3 *db)
                 char dateStr[20];
                 sprintf(dateStr, "%d/%d/%d", month, day, year);
 
+                // Prepare INSERT statement - notice we do not include the redundant 'name' column anymore.
                 sqlite3_prepare_v2(db,
                     "INSERT OR IGNORE INTO records "
-                    "(id, user_id, name, account_nbr, deposit_date, country, phone, amount, type) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                    "(id, user_id, account_nbr, deposit_date, country, phone, amount, type) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
                     -1, &stmt, NULL);
                 sqlite3_bind_int   (stmt, 1, id);
                 sqlite3_bind_int   (stmt, 2, userId);
-                sqlite3_bind_text  (stmt, 3, name,        -1, SQLITE_STATIC);
-                sqlite3_bind_int   (stmt, 4, accountNbr);
-                sqlite3_bind_text  (stmt, 5, dateStr,     -1, SQLITE_STATIC);
-                sqlite3_bind_text  (stmt, 6, country,     -1, SQLITE_STATIC);
-                sqlite3_bind_int64 (stmt, 7, phone);
-                sqlite3_bind_double(stmt, 8, amount);
-                sqlite3_bind_text  (stmt, 9, accountType, -1, SQLITE_STATIC);
+                sqlite3_bind_int   (stmt, 3, accountNbr);
+                sqlite3_bind_text  (stmt, 4, dateStr,     -1, SQLITE_STATIC);
+                sqlite3_bind_text  (stmt, 5, country,     -1, SQLITE_STATIC);
+                sqlite3_bind_int64 (stmt, 6, phone);
+                sqlite3_bind_double(stmt, 7, amount);
+                sqlite3_bind_text  (stmt, 8, accountType, -1, SQLITE_STATIC);
                 sqlite3_step(stmt);
                 sqlite3_finalize(stmt);
             }
@@ -124,7 +124,10 @@ sqlite3 *initDB()
         exit(1);
     }
 
-    // Create tables if they do not already exist
+    // Create tables if they do not already exist.
+    // The 'records' table is now normalized: 'name' is removed (since it's a duplicate of users.name),
+    // and a FOREIGN KEY links it directly to the users table.
+    // The 'notifications' table is deleted as we use named pipes (FIFOs) for instant notifications instead.
     const char *sql =
         "CREATE TABLE IF NOT EXISTS users ("
         "   id       INTEGER PRIMARY KEY,"
@@ -135,19 +138,13 @@ sqlite3 *initDB()
         "CREATE TABLE IF NOT EXISTS records ("
         "   id           INTEGER PRIMARY KEY AUTOINCREMENT,"
         "   user_id      INTEGER NOT NULL,"
-        "   name         TEXT NOT NULL,"
         "   account_nbr  INTEGER NOT NULL,"
         "   deposit_date TEXT NOT NULL,"
         "   country      TEXT NOT NULL,"
         "   phone        INTEGER NOT NULL,"
         "   amount       REAL NOT NULL,"
-        "   type         TEXT NOT NULL"
-        ");"
-
-        "CREATE TABLE IF NOT EXISTS notifications ("
-        "   id           INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "   recipient_id INTEGER NOT NULL,"
-        "   message      TEXT NOT NULL"
+        "   type         TEXT NOT NULL,"
+        "   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE"
         ");";
 
     char *err = NULL;
