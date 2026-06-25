@@ -45,7 +45,8 @@ void loginMenu(char a[50], char pass[50])
 {
     system("clear");
     printf("\n\n\n\t\t\t\t   Bank Management System\n\t\t\t\t\t User Login:");
-    scanf("%s", a);
+    // Use a width limit of 49 to prevent buffer overflow on the 50-byte username buffer.
+    scanf("%49s", a);
     while (getchar() != '\n'); // Clear the newline left in the buffer by scanf
 
     printf("\n\n\n\n\n\t\t\t\tEnter the password to login:");
@@ -99,7 +100,9 @@ const char *getPassword(struct User u, sqlite3 *db)
         return decrypted;
     }
 
-    // No matching user was found — clean up and return sentinel value
+    // No matching user was found in the database.
+    // Instead of returning the sentinel string "no user found", we return NULL.
+    // The calling function must check for NULL to avoid segfaults and prevent unauthorized login.
     sqlite3_finalize(stmt);
-    return "no user found";
+    return NULL;
 }

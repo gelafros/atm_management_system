@@ -113,7 +113,14 @@ void initMenu(struct User *u,sqlite3 *db)
         case 1:
             login:
             loginMenu(u->name, u->password);
-            if (strcmp(u->password, getPassword(*u, db)) == 0)
+            
+            // Retrieve the password from the database.
+            // If the user doesn't exist, getPassword returns NULL.
+            const char *dbPassword = getPassword(*u, db);
+            
+            // Verify that the user exists (dbPassword is not NULL)
+            // and that the entered password matches the stored password.
+            if (dbPassword != NULL && strcmp(u->password, dbPassword) == 0)
             {
                 // --- Retrieve the user's ID from the database ---
                 // We need the ID so the rest of the app knows which user is logged in.
@@ -155,7 +162,8 @@ void initMenu(struct User *u,sqlite3 *db)
             while (1)
             {
                 printf("\n\n\t\"Type in a new Username: ");
-                scanf("%s", u->name);
+                // Use a width limit of 49 to prevent buffer overflow on the 50-byte username buffer.
+                scanf("%49s", u->name);
                 while (getchar() != '\n'); // Clear the newline left in the buffer
 
                 // --- Check if username already exists in the database ---

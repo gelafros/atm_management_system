@@ -267,7 +267,8 @@ enterAccountNbr:
     while (code == -1)
     {
         printf("\nEnter the country: ");
-        scanf("%s", r.country);
+        // Use a width limit of 99 to prevent buffer overflow on the 100-byte country buffer.
+        scanf("%99s", r.country);
         code = getCountryCode(r.country);
         if (code == -1)
             printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, r.country, COLOR_RESET);
@@ -817,7 +818,8 @@ void updateAcc(struct User u, sqlite3 *db)
             while (code == -1)
             {
                 printf("\nEnter the new country: ");
-                scanf("%s", newCountry);
+                // Use a width limit of 99 to prevent buffer overflow on the 100-byte newCountry buffer.
+                scanf("%99s", newCountry);
                 code = getCountryCode(newCountry);
                 if (code == -1)
                     printf("%s✖ Country '%s' not recognized. Please try again.%s\n", COLOR_RED, newCountry, COLOR_RESET);
@@ -940,7 +942,16 @@ void transferOwner(struct User u, sqlite3 *db)
     char newUserName[100];
     printf("_____________________\n");
     printf("\nEnter the new owner name:");
-    scanf("%s", newUserName);
+    // Use a width limit of 99 to prevent buffer overflow on the 100-byte newUserName buffer.
+    scanf("%99s", newUserName);
+
+    // Prevent user from transferring an account to themselves
+    if (strcmp(newUserName, u.name) == 0)
+    {
+        printf("%s\n✖ Transfer failed! You cannot transfer an account to yourself.%s\n", COLOR_RED, COLOR_RESET);
+        stayOrReturn(1, transferOwner, u, db);
+        return;
+    }
 
     // --- Verify the recipient exists in the users table ---
     int newUserId = -1;
@@ -962,6 +973,26 @@ void transferOwner(struct User u, sqlite3 *db)
         stayOrReturn(3, transferOwner, u, db);
         return;
     }
+
+    // --- Verify the recipient doesn't already own an account with this number ---
+    // We query by recipient name and account number to make sure the target user
+    // doesn't already have an account with the same number.
+    sqlite3_prepare_v2(db,
+        "SELECT id FROM records WHERE name = ? AND account_nbr = ?;",
+        -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, newUserName, -1, SQLITE_STATIC);
+    sqlite3_bind_int (stmt, 2, accNbr);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        // Recipient already owns an account with this number.
+        // Finalize the statement to prevent a resource leak and abort the transfer.
+        sqlite3_finalize(stmt);
+        printf("%s\n✖ Transfer failed! The recipient '%s' already owns an account with number %d.%s\n", COLOR_RED, newUserName, accNbr, COLOR_RESET);
+        stayOrReturn(1, transferOwner, u, db);
+        return;
+    }
+    sqlite3_finalize(stmt);
 
     // --- Update the record: change both the name and user_id to the new owner ---
     sqlite3_prepare_v2(db,
