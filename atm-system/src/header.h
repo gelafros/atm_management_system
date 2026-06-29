@@ -1,3 +1,6 @@
+#ifndef HEADER_H
+#define HEADER_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,7 +54,7 @@ struct User
 
 // authentication functions
 void loginMenu(char a[50], char pass[50]);
-void registerMenu(char a[50], char pass[50]);
+
 const char *getPassword(struct User u, sqlite3 *db);
 void getMaskedPassword(char *password);
 
@@ -68,3 +71,5 @@ void displayUserAccounts(struct User u, sqlite3 *db);
 
 // database functions
 sqlite3 *initDB();
+
+#endif

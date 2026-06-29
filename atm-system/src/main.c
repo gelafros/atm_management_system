@@ -296,13 +296,14 @@ void initMenu(struct User *u,sqlite3 *db)
             break;
 
         case 3:
-            exit(1);
+            // Normal exit — use exit code 0 to signal success to the OS
+            exit(0);
             break;
         default:
             printf("%sInvalid operation! Please choose a valid option.%s\n", COLOR_RED, COLOR_RESET);
         }
     }
-};
+}
 
 // main is the entry point of the ATM Management System, initializing the session and launching the interface.
 int main()
@@ -312,7 +313,6 @@ int main()
     initMenu(&u,db);
     
     // Start background IPC notification listener for this session
-    extern void startNotificationListener(struct User u);
     startNotificationListener(u);
 
     mainMenu(u,db);
