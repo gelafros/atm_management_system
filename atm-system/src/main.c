@@ -84,14 +84,14 @@ void mainMenu(struct User u,sqlite3 *db)
         printf("\t\t" COLOR_CYAN "│" STYLE_BOLD COLOR_GREEN "             🏦 ATM MAIN PORTAL               " COLOR_CYAN "│" COLOR_RESET "\n");
         printf("\t\t" COLOR_CYAN "└──────────────────────────────────────────────┘" COLOR_RESET "\n");
         printf("\n\t\t" STYLE_BOLD COLOR_YELLOW "  -->> Select a banking transaction:" COLOR_RESET "\n\n");
-        printf("\t\t" COLOR_BLUE "  [1]" COLOR_RESET " Create a new bank account\n");
-        printf("\t\t" COLOR_BLUE "  [2]" COLOR_RESET " Update account contact details\n");
-        printf("\t\t" COLOR_BLUE "  [3]" COLOR_RESET " Check account details & calculate interest\n");
-        printf("\t\t" COLOR_BLUE "  [4]" COLOR_RESET " View list of all owned accounts\n");
-        printf("\t\t" COLOR_BLUE "  [5]" COLOR_RESET " Perform deposit / withdrawal transaction\n");
-        printf("\t\t" COLOR_BLUE "  [6]" COLOR_RESET " Close / remove existing account\n");
-        printf("\t\t" COLOR_BLUE "  [7]" COLOR_RESET " Transfer account ownership\n");
-        printf("\t\t" COLOR_BLUE "  [8]" COLOR_RESET " Exit system\n\n");
+        printf("\t\t" COLOR_BLUE "  [1]" COLOR_RESET " Create a new account\n");
+        printf("\t\t" COLOR_BLUE "  [2]" COLOR_RESET " Update information of existing account\n");
+        printf("\t\t" COLOR_BLUE "  [3]" COLOR_RESET " Check accounts\n");
+        printf("\t\t" COLOR_BLUE "  [4]" COLOR_RESET " Check list of owned accounts\n");
+        printf("\t\t" COLOR_BLUE "  [5]" COLOR_RESET " Make transaction\n");
+        printf("\t\t" COLOR_BLUE "  [6]" COLOR_RESET " Remove existing account\n");
+        printf("\t\t" COLOR_BLUE "  [7]" COLOR_RESET " Transfer owner\n");
+        printf("\t\t" COLOR_BLUE "  [8]" COLOR_RESET " Exit\n\n");
         printf("\t\t" STYLE_BOLD "  Choose option [1-8]: " COLOR_RESET);
         
         if (scanf("%d", &option) != 1) {
