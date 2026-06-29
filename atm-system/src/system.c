@@ -218,9 +218,9 @@ noAccount:
     }
     if (r.deposit.month < 1 || r.deposit.month > 12 ||
         r.deposit.day < 1 || r.deposit.day > 31 ||
-        r.deposit.year < 1900 || r.deposit.year > 2100)
+        r.deposit.year < 1900 || r.deposit.year > 2026)
     {
-        printf("%s✖ Invalid date! Month must be 1-12, day 1-31, year 1900-2100.%s\n", COLOR_RED, COLOR_RESET);
+        printf("%s✖ Invalid date! Month must be 1-12, day 1-31, year 1900-2026.%s\n", COLOR_RED, COLOR_RESET);
         sleep(3);
         goto noAccount;
     }
