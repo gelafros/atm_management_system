@@ -27,24 +27,19 @@ static void seedDB(sqlite3 *db)
             // Begin a transaction so all inserts commit atomically (faster + safer)
             sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 
-            while (fscanf(fp, "%d %s %s", &id, name, password) == 3)
+            while (fscanf(fp, "%d %49s %49s", &id, name, password) == 3)
             {
-                // Encrypt the password using a Caesar cipher (shift by +3) before saving
-                // because users.txt contains plaintext passwords but the application expects encrypted ones.
-                int p_idx = 0;
-                while (password[p_idx] != '\0')
-                {
-                    password[p_idx] = password[p_idx] + 3;
-                    p_idx++;
-                }
+                // Hash the plaintext password from users.txt using salted SHA-256 before storing
+                char password_hash[65];
+                hashPassword(name, password, password_hash);
 
                 // INSERT each user — use the original id from the file
                 sqlite3_prepare_v2(db,
                     "INSERT OR IGNORE INTO users (id, name, password) VALUES (?, ?, ?);",
                     -1, &stmt, NULL);
                 sqlite3_bind_int (stmt, 1, id);
-                sqlite3_bind_text(stmt, 2, name,     -1, SQLITE_STATIC);
-                sqlite3_bind_text(stmt, 3, password, -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 2, name,          -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 3, password_hash, -1, SQLITE_STATIC);
                 sqlite3_step(stmt);
                 sqlite3_finalize(stmt);
             }

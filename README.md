@@ -1,61 +1,73 @@
-# ATM Management System
+# ATM Management System — C, SQLite3 & Linux Named-Pipe IPC
 
-## Description
-A command-line ATM management system built in C with SQLite. Users can register, log in, manage bank accounts, make transactions, and transfer account ownership securely.
+[![C](https://img.shields.io/badge/Language-C11-A8B9CC?logo=c&logoColor=black)](https://en.cppreference.com/w/c)
+[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![CI](https://github.com/gelafros/atm_management_system/actions/workflows/ci.yml/badge.svg)](https://github.com/gelafros/atm_management_system/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Features
-- **User Authentication** — Login and Registration with unique username enforcement
-- **Password Encryption** — Passwords are encrypted before storage using Caesar cipher
-- **Create Accounts** — Savings, Current, Fixed01 (1yr), Fixed02 (2yr), Fixed03 (3yr)
-- **Check Account Details** — View individual account info with interest calculations
-- **Check Owned Accounts** — List all accounts belonging to the logged-in user
-- **Update Accounts** — Modify phone number or country for an existing account
-- **Make Transactions** — Deposit and withdraw with overdraft protection (blocked for fixed-term accounts)
-- **Remove Accounts** — Delete any owned account
-- **Transfer Ownership** — Transfer an account to another registered user
-- **Instant Notifications** — Real-time transfer alerts via named pipes (FIFO) and child processes
-- **SQLite Database** — Relational database with foreign keys, replacing flat-file storage
-- **Color-coded TUI** — Enhanced terminal interface with ANSI colors and box-drawing
+A command-line banking and ATM management system written in **C** backed by **SQLite3** relational persistence and **POSIX Named Pipes (`mkfifo`)** for real-time inter-process notifications across concurrent user terminal sessions.
 
-## Prerequisites
-- GCC or any C compiler
-- SQLite3 development library (`libsqlite3-dev`)
+---
 
-## How to Compile and Run
+## Key Engineering Highlights
+
+- **Normalized Relational Persistence (`SQLite3`)**:
+  Replaces flat-file `.txt` storage with a normalized schema (`users` and `records` linked via `FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE`), automatic legacy data migration inside atomic SQLite transactions, and parameterized prepared statements (`sqlite3_prepare_v2` / `sqlite3_bind_*`) to prevent SQL injection.
+- **Salted SHA-256 Password Hashing & Terminal Masking (`termios`)**:
+  Captures passwords with canonical mode and terminal echo disabled (`~ICANON & ~ECHO`), and hashes credentials using a self-contained **FIPS 180-4 SHA-256** implementation salted per username (`atm-v1:<username>:<password>`) so plaintext passwords are never stored in the database.
+- **Real-Time Inter-Process Communication (`fork` + `mkfifo`)**:
+  Upon login, the session spawns a background child listener (`fork()`) blocking on a per-user named pipe (`./data/fifo_<username>`). When another user transfers account ownership in a separate terminal session, the writer pushes an IPC payload over the FIFO, delivering an instant terminal alert to the recipient and cleaning up via `atexit()` / `SIGTERM`.
+- **Financial & Interest Engine**:
+  Supports `savings` (7% annual interest paid monthly on the deposit day), `fixed01` (4%, 1-year lock), `fixed02` (5%, 2-year lock), `fixed03` (8%, 3-year lock), and `current` (no interest), enforcing fixed-term transaction locks and overdraft protection.
+
+---
+
+## Project Structure
+
+```text
+atm-system/
+├── Makefile                 # Strict C build (-Wall -Wextra -lsqlite3)
+├── data/
+│   ├── users.txt            # Legacy user seed data (migrated on first startup)
+│   ├── records.txt          # Legacy account seed data (migrated on first startup)
+│   └── atm.db               # SQLite database (auto-generated at runtime)
+└── src/
+    ├── header.h             # Shared structs, ANSI TUI macros & prototypes
+    ├── main.c               # Entry point, TUI menus & POSIX FIFO child listener
+    ├── auth.c               # Salted SHA-256 hashing, termios masking & login queries
+    ├── system.c             # Account CRUD, interest calculation, transactions & transfers
+    └── db.c                 # SQLite schema initialization & transactional data seeding
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- GCC or Clang C compiler
+- SQLite3 development headers (`sudo apt-get install libsqlite3-dev`)
+
+### Build & Run
+
 ```bash
 cd atm-system
 make
 ./atm
 ```
 
-To clean build artifacts:
+Clean build artifacts:
+
 ```bash
 make clean
 ```
 
-## File Structure
-```
-atm-system/
-├── Makefile
-├── data/
-│   ├── users.txt        # Legacy seed data (imported on first run)
-│   ├── records.txt      # Legacy seed data (imported on first run)
-│   └── atm.db           # SQLite database (auto-created)
-└── src/
-    ├── header.h         # Shared structs, prototypes, color macros
-    ├── main.c           # Entry point, menus, FIFO notification listener
-    ├── auth.c           # Login, password masking, password retrieval
-    ├── system.c         # All ATM operations (CRUD, transactions, transfers)
-    └── db.c             # SQLite initialization and legacy data migration
-```
-## Authors
+---
 
-- [gelafros](https://github.com/gelafros)
+## Author
 
-## Security note
-
-This is an educational project. Passwords are obfuscated with a Caesar cipher (shift +3), which is **not** secure. A real system must store salted hashes (bcrypt or argon2) and never store passwords reversibly.
+- **Georgios Elafros** ([@gelafros](https://github.com/gelafros))
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+Released under the [MIT License](LICENSE).

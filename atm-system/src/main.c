@@ -160,13 +160,15 @@ void initMenu(struct User *u,sqlite3 *db)
             login:
             loginMenu(u->name, u->password);
             
-            // Retrieve the password from the database.
+            // Retrieve the stored salted SHA-256 password hash from the database.
             // If the user doesn't exist, getPassword returns NULL.
             const char *dbPassword = getPassword(*u, db);
+            char enteredHash[65];
+            hashPassword(u->name, u->password, enteredHash);
             
             // Verify that the user exists (dbPassword is not NULL)
-            // and that the entered password matches the stored password.
-            if (dbPassword != NULL && strcmp(u->password, dbPassword) == 0)
+            // and that the salted SHA-256 hash of the entered password matches the stored hash.
+            if (dbPassword != NULL && strcmp(enteredHash, dbPassword) == 0)
             {
                 // --- Retrieve the user's ID from the database ---
                 // We need the ID so the rest of the app knows which user is logged in.
@@ -253,18 +255,11 @@ void initMenu(struct User *u,sqlite3 *db)
                 }
             }
 
-            // --- Get and encrypt the password ---
+            // --- Get and hash the password with salted SHA-256 ---
+            char rawPassword[50];
             printf("\n\t\"Type in a new Password: ");
-            getMaskedPassword(u->password);
-
-            // Encrypt using Caesar cipher: shift each character forward by +3
-            // This means 'a' becomes 'd', 'z' becomes '}', etc.
-            int p_idx = 0;
-            while (u->password[p_idx] != '\0')
-            {
-                u->password[p_idx] = u->password[p_idx] + 3;
-                p_idx++;
-            }
+            getMaskedPassword(rawPassword);
+            hashPassword(u->name, rawPassword, u->password);
 
             // --- Insert the new user into the database ---
             {

@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -49,12 +50,12 @@ struct User
 {
     int id;
     char name[50];
-    char password[50];
+    char password[65];
 };
 
 // authentication functions
 void loginMenu(char a[50], char pass[50]);
-
+void hashPassword(const char *username, const char *password, char out_hex[65]);
 const char *getPassword(struct User u, sqlite3 *db);
 void getMaskedPassword(char *password);
 
