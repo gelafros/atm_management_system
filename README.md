@@ -48,3 +48,14 @@ atm-system/
     ├── system.c         # All ATM operations (CRUD, transactions, transfers)
     └── db.c             # SQLite initialization and legacy data migration
 ```
+## Authors
+
+- [gelafros](https://github.com/gelafros)
+
+## Security note
+
+This is an educational project. Passwords are obfuscated with a Caesar cipher (shift +3), which is **not** secure. A real system must store salted hashes (bcrypt or argon2) and never store passwords reversibly.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
